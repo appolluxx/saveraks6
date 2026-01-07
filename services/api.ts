@@ -165,7 +165,16 @@ export const deployNode = async (pinData: any) => {
 
 export const getProfile = (): User | null => {
   const data = localStorage.getItem(STORAGE_KEY_USER);
-  return data ? JSON.parse(data) : null;
+  if (!data) return null;
+  try {
+    const user = JSON.parse(data);
+    if (!user.history) user.history = [];
+    if (!user.badges) user.badges = [];
+    if (user.totalSRT === undefined) user.totalSRT = user.points || 0;
+    return user;
+  } catch {
+    return null;
+  }
 };
 
 export const logout = () => {

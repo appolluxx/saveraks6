@@ -10,7 +10,7 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
-  const { currentRank, nextRank, progressPercent, srtNeededForNext } = getProgressToNextRank(user.totalSRT);
+  const { currentRank, nextRank, progressPercent, srtNeededForNext } = getProgressToNextRank(user?.totalSRT || 0);
 
   return (
     <div className="space-y-10 pb-24 px-6 pt-6 animate-in fade-in duration-700">
@@ -106,8 +106,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
 
       <div className="grid grid-cols-2 gap-5">
         {[
-          { label: 'Logged Missions', value: user.history.length, icon: Activity, color: 'text-eco-500', bg: 'bg-eco-50' },
-          { label: 'Delta Cycle', value: `+${user.currentMonthSRT}`, icon: Award, color: 'text-amber-500', bg: 'bg-amber-50' },
+          { label: 'Logged Missions', value: (user?.history || []).length, icon: Activity, color: 'text-eco-500', bg: 'bg-eco-50' },
+          { label: 'Delta Cycle', value: `+${user?.currentMonthSRT || 0}`, icon: Award, color: 'text-amber-500', bg: 'bg-amber-50' },
           { label: 'Node Integrity', value: '100%', icon: Shield, color: 'text-blue-500', bg: 'bg-blue-50' },
           { label: 'Growth Vector', value: `V-${currentRank}`, icon: Zap, color: 'text-purple-500', bg: 'bg-purple-50' },
         ].map(stat => (

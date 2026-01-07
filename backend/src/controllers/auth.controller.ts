@@ -202,7 +202,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
                 name: user.fullName,
                 role: user.role,
                 studentId: user.studentId,
-                email: user.email
+                email: user.email,
+                totalSRT: user.totalPoints || 0,
+                currentMonthSRT: 0,
+                badges: [],
+                history: [],
+                points: user.totalPoints || 0,
+                xp: user.totalPoints || 0,
+                level: 1,
+                classRoom: user.classRoom
             }
         });
 
