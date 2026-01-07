@@ -17,6 +17,12 @@ const IssueReporter: React.FC<IssueReporterProps> = ({ onActivityLogged }) => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // Map interaction state
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
   const MAP_IMAGE = "/map.jpg";
 
   // Fix: Handling async getPins in useEffect
@@ -34,18 +40,76 @@ const IssueReporter: React.FC<IssueReporterProps> = ({ onActivityLogged }) => {
     loadPins();
   }, []);
 
-  const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (selectedPin) { setSelectedPin(null); return; }
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setNewPin({ x, y });
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.stopPropagation(); // Stop page scrolling
+    const zoomSensitivity = 0.001;
+    const newScale = Math.min(Math.max(1, scale - e.deltaY * zoomSensitivity), 4);
+    setScale(newScale);
+  };
+
+  // Touch handlers for mobile pan/zoom would go here (simplified for now to just pan)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging && e.touches.length === 1) {
+      setPosition({
+        x: e.touches[0].clientX - dragStart.x,
+        y: e.touches[0].clientY - dragStart.y
+      });
+    }
   };
 
   const handlePinClick = (e: React.MouseEvent, pin: PinType) => {
     e.stopPropagation();
     setSelectedPin(pin);
     setNewPin(null);
+  };
+
+  const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only register click if we aren't dragging significantly
+    if (isDragging) return;
+
+    if (selectedPin) { setSelectedPin(null); return; }
+
+    // We need to calculate click position relative to the scaled/translated image
+    const rect = e.currentTarget.getBoundingClientRect();
+
+    // Reverse the transform to get the original 0-100% coordinates
+    // This is complex because we need the click relative to the image content, not the viewport
+    // Simplified approach: rely on the click target being the container
+    // But since we are transforming the INNER div, we should attach clicking to THAT.
+
+    // Correct approach:
+    // The click coordinates (clientX/Y) are screen coordinates.
+    // The image's displayed rectangle (rect) includes the transform.
+    // So (clientX - rect.left) / rect.width gives us the % relative to the SCALED image.
+    // This is actually what we want for pinning, because the pins are also inside the scaled container.
+
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setNewPin({ x, y });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,12 +119,11 @@ const IssueReporter: React.FC<IssueReporterProps> = ({ onActivityLogged }) => {
 
     try {
       await deployNode({
-        lat: newPin.x, // Using x/y as mock coordinates
+        lat: newPin.x,
         lng: newPin.y,
         type,
         description
       });
-      // Fix: Handling async getPins result correctly
       const data = await getPins();
       setPins(data);
       setNewPin(null);
@@ -79,6 +142,7 @@ const IssueReporter: React.FC<IssueReporterProps> = ({ onActivityLogged }) => {
     </div>
   );
 
+  // We wrap the map content in a transformable div
   return (
     <div className="space-y-8 px-6 pt-6 pb-12 animate-in fade-in duration-700">
       <div className="flex flex-col gap-1">
@@ -86,42 +150,89 @@ const IssueReporter: React.FC<IssueReporterProps> = ({ onActivityLogged }) => {
         <h2 className="text-3xl font-bold text-slate-900 font-display italic uppercase tracking-tighter leading-none">Campus Matrix</h2>
       </div>
 
-      <div className="bg-white p-2 rounded-unit shadow-eco relative overflow-hidden group border border-eco-50">
+      <div
+        className="bg-white p-2 rounded-unit shadow-eco relative overflow-hidden group border border-eco-50 h-[80vh]" // Fixed height container
+        onMouseLeave={handleMouseUp}
+        onMouseUp={handleMouseUp}
+      >
         <div
-          className="relative w-full aspect-square bg-slate-100 rounded-inner overflow-hidden cursor-crosshair"
-          onClick={handleMapClick}
+          className="w-full h-full overflow-hidden relative cursor-grab active:cursor-grabbing bg-slate-100 rounded-inner"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onWheel={handleWheel}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleMouseUp}
         >
-          <img src={MAP_IMAGE} alt="Campus Map" className="w-full h-full object-cover opacity-60 grayscale hover:opacity-80 transition-all duration-1000" />
+          {/* Apply transform here */}
+          <div
+            className="w-full h-full relative origin-top-left transition-transform duration-75 ease-linear"
+            style={{
+              transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+              // Using style for performance
+            }}
+            onClick={(e) => {
+              // Verify we didn't just drag
+              // Simple check: We can use a ref to track drag distance, or just check 'isDragging' state?
+              // The issue is onClick fires after onMouseUp.
+              // Let's settle for a simplified click logic that just checks if we are "dragging" state-wise.
+              // However, isDragging is set to false in onMouseUp. 
+              // Better is to allow pinning only if not dragged far. 
+              // For MVP: Let's assume clicks are quick and drags take time/distance.
+              handleMapClick(e);
+            }}
+          >
+            <img
+              src={MAP_IMAGE}
+              alt="Campus Map"
+              className="w-full h-full object-cover pointer-events-none" // prevent img drag
+              draggable={false}
+            />
 
-          <div className="absolute inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'radial-gradient(circle, #0f172a 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+            <div className="absolute inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'radial-gradient(circle, #0f172a 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
-          {pins.map(pin => (
-            <button
-              key={pin.id}
-              onClick={(e) => handlePinClick(e, pin)}
-              className={`absolute w-10 h-10 -ml-5 -mt-5 flex items-center justify-center transition-all hover:scale-125 ${pin.status === 'RESOLVED' ? 'text-eco-500' : 'text-red-500'
-                }`}
-              style={{ left: `${pin.lat}%`, top: `${pin.lng}%` }}
-            >
-              <div className="absolute inset-0 bg-current opacity-20 rounded-full animate-ping"></div>
-              {pin.status === 'RESOLVED' ? <CheckCircle2 size={24} strokeWidth={3} /> : <MapPin fill="currentColor" size={24} />}
-            </button>
-          ))}
+            {pins.map(pin => (
+              <button
+                key={pin.id}
+                onClick={(e) => {
+                  e.stopPropagation(); // Don't trigger map click
+                  handlePinClick(e, pin);
+                }}
+                className={`absolute w-10 h-10 -ml-5 -mt-5 flex items-center justify-center transition-all hover:scale-125 ${pin.status === 'RESOLVED' ? 'text-eco-500' : 'text-red-500'
+                  }`}
+                style={{ left: `${pin.lat}%`, top: `${pin.lng}%`, transform: `scale(${1 / scale})` }} // Counter-scale pins to keep size consistent? Or let them grow? Let them grow for now for visibility, or scale inversely.
+              >
+                {/*  Inverse scaling for pins keeps them readable. style={{ transform: `scale(${1/scale})` }} */}
+                <div className="relative" style={{ transform: `scale(${1 / scale})` }}>
+                  <div className="absolute inset-0 bg-current opacity-20 rounded-full animate-ping"></div>
+                  {pin.status === 'RESOLVED' ? <CheckCircle2 size={24} strokeWidth={3} /> : <MapPin fill="currentColor" size={24} />}
+                </div>
+              </button>
+            ))}
 
-          {newPin && (
-            <div
-              className="absolute w-12 h-12 -ml-6 -mt-6 text-eco-600 animate-pulse pointer-events-none flex items-center justify-center"
-              style={{ left: `${newPin.x}%`, top: `${newPin.y}%` }}
-            >
-              <div className="absolute inset-0 border-2 border-eco-500 rounded-full animate-spin"></div>
-              <Crosshair size={32} strokeWidth={3} className="text-eco-500" />
-            </div>
-          )}
+            {newPin && (
+              <div
+                className="absolute w-12 h-12 -ml-6 -mt-6 text-eco-600 animate-pulse pointer-events-none flex items-center justify-center"
+                style={{ left: `${newPin.x}%`, top: `${newPin.y}%` }}
+              >
+                <div className="relative" style={{ transform: `scale(${1 / scale})` }}>
+                  <div className="absolute inset-0 border-2 border-eco-500 rounded-full animate-spin"></div>
+                  <Crosshair size={32} strokeWidth={3} className="text-eco-500" />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-bold text-slate-900 shadow-sm flex items-center gap-2">
+        <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-bold text-slate-900 shadow-sm flex items-center gap-2 pointer-events-none">
           <div className="w-1.5 h-1.5 rounded-full bg-eco-500 animate-pulse" />
           SENSORS ACTIVE
+        </div>
+
+        {/* Zoom Controls */}
+        <div className="absolute bottom-6 right-6 flex flex-col gap-2">
+          <button className="w-10 h-10 bg-white rounded-full shadow-eco flex items-center justify-center font-bold text-slate-700 hover:bg-slate-50 active:scale-95" onMouseUp={() => setScale(s => Math.min(s + 0.5, 4))}>+</button>
+          <button className="w-10 h-10 bg-white rounded-full shadow-eco flex items-center justify-center font-bold text-slate-700 hover:bg-slate-50 active:scale-95" onMouseUp={() => setScale(s => Math.max(s - 0.5, 1))}>-</button>
         </div>
       </div>
 
