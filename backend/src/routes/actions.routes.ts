@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { type, description, imageBase64, srtOverride } = req.body;
-        
+
         // For demo purposes, use a demo user ID
         // In production, this would come from auth middleware
         const userId = 'demo-user-id';
@@ -138,6 +138,20 @@ router.post('/submit', async (req, res) => {
         // For now we'll just use a placeholder
         const imageUrl = "https://placeholder.co/image.jpg";
 
+        const pointsMap: Record<string, number> = {
+            'recycling': 10,
+            'zero_waste': 8,
+            'eco_product': 5,
+            'walk': 10,
+            'bicycle': 8,
+            'commute': 5,
+            'tree_planting': 10,
+            'energy_saving': 5,
+            'report': 5,
+            'waste_sorting': 10
+        };
+        const points = pointsMap[actionType] || 10;
+
         const action = await prisma.ecoAction.create({
             data: {
                 userId,
@@ -145,8 +159,8 @@ router.post('/submit', async (req, res) => {
                 description,
                 imageUrl,
                 aiAnalysis: JSON.stringify(sortingAnalysis),
-                pointsEarned: 10, // Default points, should be calculated based on analysis
-                status: 'approved' // Auto-approve for demo
+                pointsEarned: points,
+                status: 'approved'
             }
         });
 
@@ -155,7 +169,7 @@ router.post('/submit', async (req, res) => {
             where: { id: userId },
             data: {
                 totalPoints: {
-                    increment: 10
+                    increment: points
                 }
             }
         });

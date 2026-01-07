@@ -1,43 +1,38 @@
 
-import { Badge, ActionType, MapPin, User } from './types';
+import { Badge, ActionType, MapPin, User, Reward } from './types';
 
 export const SRT_RATES: Record<string, number> = {
-  [ActionType.RECYCLE]: 50,
-  [ActionType.GREASE_TRAP]: 100,
-  [ActionType.HAZARD_SCAN]: 150,
-  [ActionType.UTILITY]: 75,
-  [ActionType.NODE_CREATE]: 25,
-  [ActionType.NODE_RESOLVE]: 50,
-  [ActionType.COMMUTE]: 15,
-  // Fix: Removed non-existent ActionType.ENERGY_POINT
-  [ActionType.GREEN_POINT]: 50,
-  [ActionType.REPORT]: 30
+  [ActionType.RECYCLE]: 10,       // แยกขยะ
+  [ActionType.ZERO_WASTE]: 8,     // ถุงผ้า/แก้วน้ำ
+  [ActionType.ECO_PRODUCT]: 5,    // ผลิตภัณฑ์เป็นมิตร
+  [ActionType.WALK]: 10,          // เดิน
+  [ActionType.BICYCLE]: 8,        // ปั่นจักรยาน
+  [ActionType.PUBLIC_TRANSPORT]: 5, // รถสาธารณะ
+  [ActionType.TREE_PLANTING]: 10, // ปลูกต้นไม้
+  [ActionType.ENERGY_SAVING]: 5,  // ปิดไฟ/พัดลม/แอร์
+  [ActionType.REPORT]: 5          // รายงานจุดขยะ
 };
 
-// Added Level Thresholds for XP calculation
-export const LEVEL_THRESHOLDS = [0, 500, 1500, 3500, 7000, 12000, 20000, 35000, 60000];
+export const LEVEL_THRESHOLDS = [0, 100, 300, 600, 1000, 2000, 5000, 10000];
 
 export const BADGES: Record<string, Badge> = {
-  firstAction: { id: 'firstAction', name: "Initiate", trigger: "Complete 1st action", icon: "🚀" },
-  streak7: { id: 'streak7', name: "Consistent", trigger: "7-day streak", icon: "🔥" },
-  greenSorter: { id: 'greenSorter', name: "Green Sorter", trigger: "50 recycle actions", icon: "♻️" },
-  guardian: { id: 'guardian', name: "Guardian", trigger: "Reach Rank 5", icon: "🛡️" },
-  mvp: { id: 'mvp', name: "MVP", trigger: "Top 3 monthly SRT", icon: "🏆" }
+  firstAction: { id: 'firstAction', name: "Eco Initiate", trigger: "เริ่มภารกิจรักษ์โลกครั้งแรก", icon: "🌱" },
+  streak7: { id: 'streak7', name: "Consistency Hero", trigger: "ทำกิจกรรมต่อเนื่อง 7 วัน", icon: "🔥" },
+  greenGuardian: { id: 'greenGuardian', name: "Green Guardian", trigger: "ปลูกต้นไม้ครบ 5 ต้น", icon: "🌳" },
+  masterSorter: { id: 'masterSorter', name: "Master Sorter", trigger: "แยกขยะครบ 50 ครั้ง", icon: "♻️" },
+  energySaver: { id: 'energySaver', name: "Watts Down", trigger: "ประหยัดพลังงานครบ 20 ครั้ง", icon: "💡" }
 };
 
-// Fix: Updated MapPin property names from x/y to lat/lng and added required timestamp
 export const INITIAL_PINS: MapPin[] = [
-  { id: 'p1', lat: 25, lng: 35, type: 'FULL_BIN', description: 'Overflowing bin near Cafeteria.', status: 'OPEN', reportedBy: '1001', timestamp: Date.now() },
-  { id: 'p2', lat: 65, lng: 75, type: 'HAZARD', description: 'Leaking water pipe near Building 3.', status: 'OPEN', reportedBy: '1002', timestamp: Date.now() },
-  { id: 'p3', lat: 45, lng: 15, type: 'MAINTENANCE', description: 'Broken solar panel on the roof.', status: 'RESOLVED', reportedBy: '1003', timestamp: Date.now() }
+  { id: 'p1', lat: 13.7760, lng: 100.5550, type: 'FULL_BIN', description: 'ขยะล้นบริเวณหน้าห้องน้ำอาคาร 1', status: 'OPEN', reportedBy: '53580', timestamp: Date.now() },
+  { id: 'p2', lat: 13.7765, lng: 100.5555, type: 'HAZARD', description: 'น้ำขังบริเวณสนามฟุตบอล', status: 'OPEN', reportedBy: '53624', timestamp: Date.now() }
 ];
 
-// Mock Leaderboard for display purposes
-export const MOCK_LEADERBOARD: User[] = [];
-
-export const REWARDS = [
-  { id: 'r1', title: 'Operational Pass', cost: 500, icon: '🎫', description: 'System-wide late arrival clearance (15m).' },
-  { id: 'r2', title: 'Bio-Resource', cost: 150, icon: '🍎', description: 'Raw organic sustenance unit from campus.' },
-  { id: 'r3', title: 'Virtual Sensor', cost: 300, icon: '🥽', description: 'Extended VR Node access for 30m.' },
-  { id: 'r4', title: 'Elite Status', cost: 1000, icon: '🎖️', description: 'Permanent identity upgrade + NFT certificate.' },
+export const REWARDS: Reward[] = [
+  { id: 'r1', title: 'คะแนนพฤติกรรม', cost: 100, icon: '⭐', description: 'เพิ่มคะแนนพฤติกรรม 10 คะแนน' },
+  { id: 'r2', title: 'ขนม/ของรางวัลเล็ก', cost: 200, icon: '🍪', description: 'แลกรับขนม ณ ห้องสวัสดิการ' },
+  { id: 'r3', title: 'พวงกุญแจ/กล่องจุ่ม', cost: 300, icon: '🎁', description: 'กล่องจุ่มจิ๋วหรือพวงกุญแจรักษ์โลก' },
+  { id: 'r4', title: 'เกียรติบัตรนักอนุรักษ์', cost: 500, icon: '📜', description: 'เกียรติบัตรรับรองการเป็น Eco-Guardian' },
+  { id: 'r5', title: 'อุปกรณ์การเรียน', cost: 800, icon: '✏️', description: 'ชุดสมุดและปากกาคุณภาพ' },
+  { id: 'r6', title: 'แก้วน้ำ/ตุ๊กตา', cost: 1000, icon: '🧸', description: 'แก้วน้ำเก็บความเย็นหรือตุ๊กตาแฮนด์เมด' },
 ];

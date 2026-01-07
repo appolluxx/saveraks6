@@ -9,22 +9,19 @@ export interface Badge {
 }
 
 export enum ActionType {
-  RECYCLE = 'recycling',
+  RECYCLE = 'recycling',           // แยกขยะ
+  ZERO_WASTE = 'zero_waste',       // ถุงผ้า/แก้วน้ำ
+  ECO_PRODUCT = 'eco_product',     // ผลิตภัณฑ์เป็นมิตร
+  WALK = 'walk',                   // เดิน
+  BICYCLE = 'bicycle',             // ปั่นจักรยาน
+  PUBLIC_TRANSPORT = 'commute',    // รถสาธารณะ
+  TREE_PLANTING = 'tree_planting', // ปลูกต้นไม้
+  ENERGY_SAVING = 'energy_saving', // ปิดไฟ/พัดลม/แอร์
+  REPORT = 'report',               // รายงานจุดขยะ
+  // Legacy/Internal
   WASTE_SORTING = 'waste_sorting',
-  TREE_PLANTING = 'tree_planting',
-  ENERGY_SAVING = 'energy_saving',
-  WATER_CONSERVATION = 'water_conservation',
   CLEANUP = 'cleanup',
-  OTHER = 'other',
-  // Keep legacy for compatibility if needed, but point to valid backend types
-  GREASE_TRAP = 'waste_sorting',
-  HAZARD_SCAN = 'cleanup',
-  UTILITY = 'energy_saving',
-  NODE_CREATE = 'other',
-  NODE_RESOLVE = 'other',
-  COMMUTE = 'other',
-  GREEN_POINT = 'other',
-  REPORT = 'other'
+  OTHER = 'other'
 }
 
 export interface Action {
@@ -57,7 +54,6 @@ export interface User {
   lastActionTime?: number;
   classRoom?: string;
   isBanned?: boolean;
-  // Compatibility fields
   points: number;
   xp: number;
   level: number;
@@ -74,21 +70,12 @@ export interface MapPin {
   timestamp: number;
 }
 
-export interface ScanResult {
-  category: string;
-  label: string;
-  points: number;
-  analysis?: string;
-  bin_color?: string;
-  upcycling_tip?: string;
-  maintenance_status?: string;
-  risk_level?: string;
-  units?: number;
-  month?: string;
-  isValid: boolean;
-  isFraud: boolean;
-  confidence: number;
-  reason: string;
+export interface Reward {
+  id: string;
+  title: string;
+  cost: number;
+  icon: string;
+  description: string;
 }
 
 export interface SchoolStats {
@@ -96,12 +83,4 @@ export interface SchoolStats {
   totalPoints: number;
   pendingReports: number;
   carbonSaved: number;
-}
-
-export interface Reward {
-  id: string;
-  title: string;
-  cost: number;
-  icon: string;
-  description: string;
 }

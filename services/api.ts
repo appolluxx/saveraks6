@@ -69,7 +69,7 @@ export const loginUser = async (identifier: string, password: string): Promise<U
       const isAdmin = identifier.startsWith('ADMIN-');
       const user: User = {
         id: crypto.randomUUID(),
-        name: isAdmin ? 'Root Administrator' : `Unit ${identifier}`,
+        name: isAdmin ? 'Admin : โรงเรียนสุรศักดิ์มนตรี' : `นิสิตหน่วย ${identifier}`,
         schoolId: identifier,
         role: isAdmin ? 'ADMIN' : 'STUDENT',
         totalSRT: 150,
@@ -249,7 +249,8 @@ export const submitAction = async (data: any): Promise<Action> => {
 };
 
 export const initializeDemoData = () => {
-  console.log("SaveRaks 2.0 System Online.");
+  console.log("Saveรักษ์ : Smart Sustainable Mindset (SSM) v2.0 Online.");
+  console.log("ยินดีต้อนรับสู่ระบบบริหารจัดการสิ่งแวดล้อม โรงเรียนสุรศักดิ์มนตรี");
 };
 
 export const calculateRank = (totalSRT: number): number => {

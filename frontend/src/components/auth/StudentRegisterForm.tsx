@@ -68,8 +68,8 @@ export const StudentRegisterForm: React.FC<StudentRegisterFormProps> = ({ onSucc
 
     return (
         <AuthLayout
-            title="Student Registration"
-            subtitle="Join SaveRaks to start your eco-journey"
+            title="ลงทะเบียนนักเรียน"
+            subtitle="เข้าร่วม Saveรักษ์ เพื่อเริ่มการเดินทางสายรักษ์โลก"
         >
             <button
                 onClick={onBack}
@@ -111,7 +111,7 @@ export const StudentRegisterForm: React.FC<StudentRegisterFormProps> = ({ onSucc
                                 maxLength={5}
                             />
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">Your student ID must be registered in the school database</p>
+                        <p className="text-xs text-slate-500 mt-1">รหัสนักเรียนต้องมีอยู่ในฐานข้อมูลของโรงเรียน (5 หลัก)</p>
                     </div>
 
                     <button

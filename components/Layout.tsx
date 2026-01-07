@@ -25,10 +25,10 @@ const Layout: React.FC<LayoutProps> = ({ children, currentTab, setTab, user }) =
             <Leaf className="text-white" size={24} />
           </div>
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold tracking-tight leading-none text-slate-900 font-display uppercase">SAVERAKS</h1>
+            <h1 className="text-xl font-bold tracking-tight leading-none text-slate-900 font-display uppercase">Saveรักษ์</h1>
             <div className="flex items-center gap-1.5 mt-1">
               <div className="w-1.5 h-1.5 rounded-full bg-eco-500 animate-pulse"></div>
-              <span className="font-mono text-[10px] text-eco-700 font-bold uppercase tracking-widest">RANK {rank} UNIT</span>
+              <span className="font-mono text-[10px] text-eco-700 font-bold uppercase tracking-widest">ECO-GUARDIAN UNIT</span>
             </div>
           </div>
         </div>
@@ -38,9 +38,9 @@ const Layout: React.FC<LayoutProps> = ({ children, currentTab, setTab, user }) =
             <Bell size={20} />
           </button>
           <div className="w-10 h-10 rounded-full border-2 border-eco-500/20 overflow-hidden shadow-sm hover:scale-105 transition-transform cursor-pointer">
-            <img 
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.schoolId}&backgroundColor=dcfce7`} 
-              alt="Avatar" 
+            <img
+              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.schoolId}&backgroundColor=dcfce7`}
+              alt="Avatar"
               className="w-full h-full object-cover"
             />
           </div>

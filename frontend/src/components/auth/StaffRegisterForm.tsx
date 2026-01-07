@@ -57,8 +57,8 @@ export const StaffRegisterForm: React.FC<StaffRegisterFormProps> = ({ onSuccess,
 
     return (
         <AuthLayout
-            title="Staff Registration"
-            subtitle="Join the SaveRaks team as a staff member"
+            title="ลงทะเบียนบุคลากร"
+            subtitle="เข้าร่วมทีม Saveรักษ์ ในฐานะคุณครูหรือเจ้าหน้าที่"
         >
             <button
                 onClick={onBack}
@@ -210,7 +210,7 @@ export const StaffRegisterForm: React.FC<StaffRegisterFormProps> = ({ onSuccess,
 
                 <div className="bg-amber-50 border border-amber-200 rounded-[20px] p-4">
                     <p className="text-sm text-amber-700">
-                        ⚠️ Staff accounts require admin approval before activation
+                        ⚠️ บัญชีสำหรับบุคลากรต้องได้รับการอนุมัติจากแอดมินก่อนเริ่มใช้งาน
                     </p>
                 </div>
 

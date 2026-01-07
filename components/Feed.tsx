@@ -44,8 +44,8 @@ const Feed: React.FC = () => {
     <div className="space-y-8 animate-in fade-in duration-700 px-6 pt-6 pb-12">
       <div className="flex justify-between items-end">
         <div className="space-y-1">
-          <span className="text-[11px] font-bold text-eco-600 uppercase tracking-[0.3em]">Operational Nexus</span>
-          <h3 className="text-3xl font-bold text-slate-900 font-display">Impact Stream</h3>
+          <span className="text-[11px] font-bold text-eco-600 uppercase tracking-[0.3em]">Surasakmontree Nexus</span>
+          <h3 className="text-3xl font-bold text-slate-900 font-display">กระแสแห่งรักษ์</h3>
         </div>
         <div className="flex items-center gap-2 text-eco-700 bg-eco-100 px-4 py-2 rounded-full border border-eco-200 shadow-sm transition-all hover:bg-eco-200 cursor-default">
           <div className="w-2 h-2 rounded-full bg-eco-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
@@ -71,9 +71,9 @@ const Feed: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-5">
                   <div className="w-14 h-14 rounded-inner bg-eco-50 border border-eco-100 flex items-center justify-center p-0.5 shadow-sm">
-                    <img 
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.userId}&backgroundColor=f0fdf4`} 
-                      className="w-full h-full object-cover rounded-inner" 
+                    <img
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.userId}&backgroundColor=f0fdf4`}
+                      className="w-full h-full object-cover rounded-inner"
                       alt="Unit"
                     />
                   </div>
@@ -101,7 +101,7 @@ const Feed: React.FC = () => {
               <div className="bg-slate-50/80 p-5 rounded-inner border border-slate-100/50">
                 <p className="text-sm text-slate-600 leading-relaxed font-medium italic">"{item.description}"</p>
               </div>
-              
+
               {item.imageUrl && (
                 <div className="rounded-inner overflow-hidden border border-slate-100 aspect-[16/10] relative shadow-inner group-hover:shadow-md transition-all duration-700">
                   <img src={item.imageUrl} alt="Mission log" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
@@ -134,14 +134,14 @@ const Feed: React.FC = () => {
           <Leaf size={140} strokeWidth={2.5} className="text-white" />
         </div>
         <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
-        
+
         <div className="relative z-10 text-white space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full border border-white/20">
             <Sparkles size={14} className="text-eco-200" />
-            <span className="font-bold uppercase tracking-widest text-[10px] text-eco-100">Efficiency Insight</span>
+            <span className="font-bold uppercase tracking-widest text-[10px] text-eco-100">Eco Insight</span>
           </div>
-          <p className="text-2xl font-bold leading-tight tracking-tight font-display italic">SYSTEM DATA SHOWS RECYCLING SAVES 40% MORE ENERGY THAN TRADITIONAL WASTE CYCLES.</p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">Source: SaveRaks Intelligence Node</p>
+          <p className="text-2xl font-bold leading-tight tracking-tight font-display italic">การคัดแยกขยะช่วยลดการปล่อยก๊าซเรือนกระจกได้ถึง 40% เมื่อเทียบกับการทิ้งรวม</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">Source: Saveรักษ์ Intelligence Node</p>
         </div>
       </div>
     </div>

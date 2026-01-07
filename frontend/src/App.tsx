@@ -44,7 +44,8 @@ const App: React.FC = () => {
       </div>
       <div className="text-center space-y-1">
         <p className="font-mono text-[10px] text-eco-600 tracking-[0.5em] uppercase animate-pulse">Synchronizing Nodes...</p>
-        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.3em]">SaveRaks Eco-Guardian v2.0</p>
+        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] Thai">Saveรักษ์ : Smart Sustainable Mindset</p>
+        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.3em]">Surasakmontree School x Youth Empowerment</p>
       </div>
     </div>
   );

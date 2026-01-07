@@ -50,18 +50,18 @@ const WasteSortingGuide: React.FC<WasteSortingGuideProps> = ({ capturedImage, on
         <div className="fixed inset-0 bg-white z-50 flex flex-col">
             <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 pb-8">
                 <div className="flex items-center justify-between mb-4">
-                    <h1 className="text-2xl font-bold">Waste Sorting Guide</h1>
+                    <h1 className="text-2xl font-bold">คู่มือการแยกขยะด้วย AI</h1>
                     <button onClick={onCancel} className="p-2 hover:bg-white/20 rounded-full transition-colors">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
-                <p className="text-green-50">AI identified items in your photo</p>
+                <p className="text-green-50">AI ระบุรายการขยะจากภาพถ่ายของคุณ</p>
             </div>
 
             <div className="relative h-48 bg-black">
                 <img src={capturedImage} alt="Captured waste" className="w-full h-full object-contain" />
                 <button onClick={onRetake} className="absolute bottom-4 right-4 bg-white text-slate-900 px-4 py-2 rounded-full shadow-lg flex items-center gap-2 hover:bg-gray-100 transition-colors">
-                    <RefreshCw className="w-4 h-4" /> Retake
+                    <RefreshCw className="w-4 h-4" /> ถ่ายใหม่
                 </button>
             </div>
 
@@ -71,8 +71,8 @@ const WasteSortingGuide: React.FC<WasteSortingGuideProps> = ({ capturedImage, on
                         <div className="inline-flex p-4 bg-green-100 rounded-full mb-4">
                             <Camera className="w-12 h-12 text-green-600 animate-pulse" />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">Analyzing Image...</h3>
-                        <p className="text-slate-600">AI is identifying waste items</p>
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">กำลังวิเคราะห์ภาพ...</h3>
+                        <p className="text-slate-600">AI กำลังแยกประเภทขยะให้คุณ</p>
                     </div>
                 )}
 
@@ -152,11 +152,11 @@ const WasteSortingGuide: React.FC<WasteSortingGuideProps> = ({ capturedImage, on
                 <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-6 safe-area-bottom">
                     <div className="max-w-2xl mx-auto space-y-3">
                         <button onClick={() => onSubmit(analysis)} className="w-full bg-green-500 text-white font-bold py-4 rounded-[24px] hover:bg-green-600 active:scale-[0.98] transition-all shadow-lg flex items-center justify-center gap-2">
-                            <span>Submit Action</span>
+                            <span>ยืนยันข้อมูลและรับแต้ม</span>
                             <ArrowRight className="w-5 h-5" />
                         </button>
                         <button onClick={onRetake} className="w-full bg-slate-100 text-slate-700 font-semibold py-3 rounded-[24px] hover:bg-slate-200 active:scale-[0.98] transition-all">
-                            Retake Photo
+                            ถ่ายภาพใหม่ (Retake)
                         </button>
                     </div>
                 </div>

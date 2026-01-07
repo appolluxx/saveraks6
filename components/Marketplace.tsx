@@ -25,8 +25,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, onRedeem }) => {
       <div className="bg-gradient-to-br from-eco-400 to-eco-600 p-10 rounded-unit flex flex-col items-center justify-center text-center gap-4 relative overflow-hidden shadow-eco-strong">
         <CreditCard size={120} className="absolute -left-12 -bottom-12 text-white opacity-10 rotate-12" />
         <div className="relative z-10 space-y-1">
-          <span className="text-[11px] font-bold text-eco-100 uppercase tracking-[0.4em]">Asset Exchange</span>
-          <h2 className="text-4xl font-bold text-white tracking-tighter italic uppercase leading-none font-display">Market Unit</h2>
+          <span className="text-[11px] font-bold text-eco-100 uppercase tracking-[0.4em]">Exchange Center</span>
+          <h2 className="text-4xl font-bold text-white tracking-tighter italic uppercase leading-none font-display">แลกรักษ์</h2>
         </div>
       </div>
 
@@ -61,19 +61,19 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, onRedeem }) => {
             <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
               <Sparkles size={100} className="text-eco-500" />
             </div>
-            
+
             {!ticketCode ? (
               <div className="space-y-8 relative z-10">
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                     <span className="text-[10px] font-bold text-eco-500 uppercase tracking-widest">Asset Allocation</span>
-                     <h3 className="text-3xl font-bold text-slate-900 tracking-tight uppercase leading-none italic font-display">{selected.title}</h3>
+                    <span className="text-[10px] font-bold text-eco-500 uppercase tracking-widest">Asset Allocation</span>
+                    <h3 className="text-3xl font-bold text-slate-900 tracking-tight uppercase leading-none italic font-display">{selected.title}</h3>
                   </div>
                   <button onClick={() => setSelected(null)} className="p-2 text-slate-300 hover:text-slate-900"><X size={28} /></button>
                 </div>
-                
+
                 <p className="text-sm text-slate-600 font-medium leading-relaxed italic border-l-4 border-eco-500 pl-4">"{selected.description}"</p>
-                
+
                 <div className="bg-eco-50 p-5 rounded-inner border border-eco-100 flex flex-col gap-1">
                   <span className="text-[9px] font-bold uppercase text-eco-600 tracking-widest">Available Balance</span>
                   <span className="text-2xl font-black font-mono text-slate-900 tracking-tighter">{user.totalSRT.toLocaleString()} SRT</span>
@@ -82,11 +82,10 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, onRedeem }) => {
                 <button
                   disabled={user.totalSRT < selected.cost}
                   onClick={handleRedeem}
-                  className={`w-full py-5 rounded-inner font-bold uppercase text-xs tracking-widest transition-all active:scale-95 ${
-                    user.totalSRT < selected.cost 
-                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-                    : 'bg-eco-500 text-white shadow-eco hover:bg-eco-600'
-                  }`}
+                  className={`w-full py-5 rounded-inner font-bold uppercase text-xs tracking-widest transition-all active:scale-95 ${user.totalSRT < selected.cost
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                      : 'bg-eco-500 text-white shadow-eco hover:bg-eco-600'
+                    }`}
                 >
                   {user.totalSRT < selected.cost ? 'Insufficient Units' : `Authorize ${selected.cost} SRT`}
                 </button>
@@ -100,7 +99,7 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, onRedeem }) => {
                   <h3 className="text-3xl font-bold text-slate-900 uppercase tracking-tight font-display italic">Authorized</h3>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Show code to system node</span>
                 </div>
-                
+
                 <div className="bg-slate-50 py-8 rounded-inner border-2 border-dashed border-eco-200">
                   <span className="text-4xl font-black text-slate-900 font-mono tracking-[0.3em]">{ticketCode}</span>
                 </div>

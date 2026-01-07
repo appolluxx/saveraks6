@@ -35,8 +35,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
 
     return (
         <AuthLayout
-            title="Welcome Back"
-            subtitle="Login to continue your eco-mission"
+            title="ยินดีต้อนรับสู่ Saveรักษ์"
+            subtitle="เข้าสู่ระบบเพื่อเริ่มภารกิจรักษ์โลกของคุณ"
         >
             <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
@@ -47,7 +47,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
 
                 <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Student ID / Email / Phone
+                        รหัสนักเรียน / อีเมล / เบอร์โทรศัพท์
                     </label>
                     <div className="relative">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
@@ -66,7 +66,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
 
                 <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Password
+                        รหัสผ่าน (Password)
                     </label>
                     <div className="relative">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
@@ -108,7 +108,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
                             Logging in...
                         </>
                     ) : (
-                        'Login'
+                        'เข้าสู่ระบบ (Login)'
                     )}
                 </button>
 
