@@ -337,8 +337,11 @@ export const getCurrentUser = async (req: any, res: Response): Promise<void> => 
             level: Math.floor((user.totalPoints || 0) / 1000) + 1,
             classRoom: user.classRoom
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Get Me Error:", error);
-        res.status(500).json({ error: "Failed to fetch user data" });
+        res.status(500).json({
+            error: "Failed to fetch user data",
+            details: error.message
+        });
     }
 };

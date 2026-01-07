@@ -1,12 +1,37 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { config } from 'dotenv';
-
-config();
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+// No top-level initialization for more robustness with env variables
+let genAI: GoogleGenerativeAI | null = null;
 
 export const analyzeWaste = async (imageBase64: string) => {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    if (!genAI) {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            console.error("CRITICAL: GEMINI_API_KEY is not defined in environment variables.");
+            throw new Error("AI service configuration missing");
+        }
+        genAI = new GoogleGenerativeAI(apiKey);
+    }
+    const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        safetySettings: [
+            {
+                category: "HARM_CATEGORY_HARASSMENT" as any,
+                threshold: "BLOCK_NONE" as any,
+            },
+            {
+                category: "HARM_CATEGORY_HATE_SPEECH" as any,
+                threshold: "BLOCK_NONE" as any,
+            },
+            {
+                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT" as any,
+                threshold: "BLOCK_NONE" as any,
+            },
+            {
+                category: "HARM_CATEGORY_DANGEROUS_CONTENT" as any,
+                threshold: "BLOCK_NONE" as any,
+            },
+        ],
+    });
 
     const prompt = `You are an expert waste management AI for Thailand's waste sorting system.
 
@@ -76,12 +101,15 @@ Guidelines:
 - Flag if items need cleaning before disposal`;
 
     try {
+        const parts = imageBase64.split(',');
+        const base64Data = parts.length > 1 ? parts[1] : parts[0];
+
         const result = await model.generateContent([
             prompt,
             {
                 inlineData: {
                     mimeType: "image/jpeg",
-                    data: imageBase64.split(',')[1]
+                    data: base64Data
                 }
             }
         ]);
@@ -89,12 +117,23 @@ Guidelines:
         const response = await result.response;
         let text = response.text();
 
-        // Clean up markdown code blocks if present
-        text = text.replace(/```json\n|\n```/g, "").trim();
+        // Enhanced cleaning for AI response (markdown blocks, leading/trailing garbage)
+        text = text.replace(/```(?:json)?/g, "").replace(/```/g, "").trim();
+
+        // Find first '{' and last '}' to extract JSON substring if there's surrounding text
+        const firstCurly = text.indexOf('{');
+        const lastCurly = text.lastIndexOf('}');
+        if (firstCurly !== -1 && lastCurly !== -1) {
+            text = text.substring(firstCurly, lastCurly + 1);
+        }
 
         return JSON.parse(text);
-    } catch (error) {
-        console.error("AI Analysis Error:", error);
-        throw new Error("Failed to analyze image");
+    } catch (error: any) {
+        console.error("AI Analysis Detailed Error:", {
+            error: error.message,
+            stack: error.stack,
+            responseTime: new Date().toISOString()
+        });
+        throw new Error(`AI Analysis Failed: ${error.message}`);
     }
 };

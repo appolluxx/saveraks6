@@ -1,15 +1,14 @@
 import express from 'express';
+import { config } from 'dotenv';
+config();
+
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { config } from 'dotenv';
 import logger from './utils/logger.js';
 import authRoutes from './routes/auth.routes.js';
 import actionRoutes from './routes/actions.routes.js';
 import pinRoutes from './routes/pins.routes.js';
-
-
-config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -56,6 +55,21 @@ app.use('/api/actions', actionRoutes);
 app.use('/api/pins', pinRoutes);
 
 
+
+// Global Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    logger.error('Unhandled Error:', {
+        error: err.message,
+        stack: err.stack,
+        path: req.path,
+        method: req.method,
+        body: req.path.includes('analyze') ? 'image-data-omitted' : req.body
+    });
+    res.status(err.status || 500).json({
+        success: false,
+        error: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message
+    });
+});
 
 app.listen(PORT, () => {
     logger.info(`🚀 SaveRaks 2.0 Backend running on port ${PORT}`);
