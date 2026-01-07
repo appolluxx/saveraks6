@@ -14,10 +14,10 @@ const Layout: React.FC<LayoutProps> = ({ children, currentTab, setTab, user }) =
   const rank = Math.floor(user.totalSRT / 1000) + 1;
 
   return (
-    <div className="min-h-screen relative flex flex-col font-sans">
+    <div className="min-h-screen relative flex flex-col font-sans bg-nature">
       {/* Organic nature-inspired background blobs */}
-      <div className="fixed -top-48 -left-48 w-[600px] h-[600px] bg-eco-100/50 rounded-full blur-[120px] pointer-events-none z-0"></div>
-      <div className="fixed -bottom-24 -right-24 w-96 h-96 bg-blue-50/50 rounded-full blur-[100px] pointer-events-none z-0"></div>
+      <div className="fixed -top-48 -left-48 w-[600px] h-[600px] bg-eco-100/50 rounded-full blur-[120px] pointer-events-none z-0 animate-blob"></div>
+      <div className="fixed -bottom-24 -right-24 w-96 h-96 bg-blue-50/50 rounded-full blur-[100px] pointer-events-none z-0 animate-blob animation-delay-2000"></div>
 
       <header className="sticky top-0 z-50 glass px-6 py-4 flex justify-between items-center transition-all duration-300 shadow-sm shadow-eco-500/5">
         <div className="flex items-center gap-3">

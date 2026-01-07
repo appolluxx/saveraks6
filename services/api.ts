@@ -51,13 +51,24 @@ export const loginUser = async (identifier: string, password: string): Promise<U
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Login failed');
+    if (!response.ok) {
+      let errorMsg = data.error || 'Login failed';
+      if (errorMsg === 'Account not registered. Please register first.') errorMsg = 'รหัสนักเรียนนี้ยังไม่ได้ลงทะเบียน กรุณาลงทะเบียนก่อนใช้งาน';
+      if (errorMsg === 'Invalid credentials.') errorMsg = 'รหัสผ่านหรือข้อมูลไม่ถูกต้อง กรุณาลองใหม่';
+      throw new Error(errorMsg);
+    }
 
     localStorage.setItem(STORAGE_KEY_TOKEN, data.token);
     localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.user));
     return data.user;
   } catch (e: any) {
-    if (e.message.includes('fetch') || e.name === 'AbortError') {
+    const isNetworkError = e.name === 'AbortError' ||
+      e.message.toLowerCase().includes('fetch') ||
+      e.message.toLowerCase().includes('network') ||
+      e.message.toLowerCase().includes('failed to connect') ||
+      e.message.toLowerCase().includes('load resource');
+
+    if (isNetworkError) {
       const isAdmin = identifier.startsWith('ADMIN-');
       const user: User = {
         id: crypto.randomUUID(),
@@ -90,7 +101,12 @@ export const registerStudent = async (data: any): Promise<User> => {
     signal: AbortSignal.timeout(10000)
   });
   const result = await response.json();
-  if (!response.ok) throw new Error(result.error || 'Registration failed');
+  if (!response.ok) {
+    let errorMsg = result.error || 'Registration failed';
+    if (errorMsg === 'Identity Conflict: This ID is already registered.') errorMsg = 'รหัสนักเรียนนี้ได้ลงทะเบียนไปแล้ว';
+    if (errorMsg === 'Phone number or Student ID already in use.') errorMsg = 'เบอร์โทรศัพท์หรือรหัสนักเรียนนี้ถูกใช้งานแล้ว';
+    throw new Error(errorMsg);
+  }
   return result.user;
 };
 

@@ -29,7 +29,10 @@ export const StudentRegisterForm: React.FC<StudentRegisterFormProps> = ({ onSucc
         try {
             const result = await verifyStudentId(formData.studentId);
             if (!result.success) {
-                throw new Error('Student ID not found in roster');
+                let errorMsg = result.error || 'Student ID not found in roster';
+                if (errorMsg === 'Already registered.') errorMsg = 'รหัสนักเรียนนี้ได้ลงทะเบียนไปแล้ว กรุณาเข้าสู่ระบบ';
+                if (errorMsg === 'Student ID not found.') errorMsg = 'ไม่พบรหัสนักเรียนนี้ในฐานข้อมูลโรงเรียน';
+                throw new Error(errorMsg);
             }
             setStudentInfo(result.student);
             setStep(2);

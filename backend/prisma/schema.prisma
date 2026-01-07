@@ -40,6 +40,12 @@ enum ActionType {
   water_conservation
   cleanup
   recycling
+  zero_waste
+  eco_product
+  walk
+  bicycle
+  commute
+  report
   other
 }
 
