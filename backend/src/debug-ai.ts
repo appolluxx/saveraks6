@@ -11,7 +11,7 @@ async function listModels() {
         // We'll try to use a model object to list, or just inspect available ones if SDK supports it.
         // Actually the SDK doesn't have a direct 'listModels' on the client instance in some versions?
         // Wait, standard correct way:
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
         console.log("Successfully initialized model object.");
 
         // Try a simple text generation to verify access
