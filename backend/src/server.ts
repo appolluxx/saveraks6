@@ -6,6 +6,7 @@ import { config } from 'dotenv';
 import logger from './utils/logger.js';
 import authRoutes from './routes/auth.routes.js';
 import actionRoutes from './routes/actions.routes.js';
+import pinRoutes from './routes/pins.routes.js';
 
 
 config();
@@ -52,6 +53,7 @@ app.use((req, res, next) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/actions', actionRoutes);
+app.use('/api/pins', pinRoutes);
 
 
 
