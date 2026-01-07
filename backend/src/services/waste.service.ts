@@ -13,7 +13,7 @@ export const analyzeWaste = async (imageBase64: string) => {
         genAI = new GoogleGenerativeAI(apiKey);
     }
     const model = genAI.getGenerativeModel({
-        model: "gemini-pro-vision",
+        model: "gemini-flash-latest",
         safetySettings: [
             {
                 category: "HARM_CATEGORY_HARASSMENT" as any,
