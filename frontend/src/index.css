@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
-/* สั่งให้ Tailwind v4 สแกนไฟล์ที่อยู่นอกโฟลเดอร์ frontend ด้วย */
-@source "../../../components/**/*.{ts,tsx}";
-@source "../../../pages/**/*.{ts,tsx}";
-@source "../../index.html";
+/* แก้ไขเส้นทางให้ถูกต้องตามโครงสร้าง Vercel (ถอยกลับไป 2 ระดับจาก frontend/src) */
+@source "../../components/**/*.{ts,tsx}";
+@source "../../pages/**/*.{ts,tsx}";
+@source "../index.html";
 @source "./**/*.{ts,tsx}";
 
 @theme {
@@ -35,16 +35,13 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    @apply bg-nature;
+    /* ใส่พื้นหลังโดยตรงเพื่อแก้ปัญหา Build Error */
+    background: radial-gradient(circle at 0% 0%, #f0fdf4 0%, #ffffff 100%);
+    background-attachment: fixed;
   }
 }
 
 @layer utilities {
-  .bg-nature {
-    background: radial-gradient(circle at 0% 0%, #f0fdf4 0%, #ffffff 100%);
-    background-attachment: fixed;
-  }
-
   .glass {
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(12px);
