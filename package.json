@@ -10,7 +10,7 @@
     "dev": "docker-compose up -d postgres redis minio && concurrently \"npm run backend\" \"npm run frontend\"",
     "prisma:generate": "npm run prisma:generate --prefix backend",
     "prisma:migrate": "npm run prisma:migrate --prefix backend",
-    "build": "npm run build --prefix frontend",
+    "build": "npm run build --prefix frontend && mkdir -p dist && cp -r frontend/dist/* ./dist/",
     "install-all": "npm install && npm install --prefix backend && npm install --prefix frontend",
     "deploy": "./deploy.bat",
     "deploy:unix": "./deploy.sh"
