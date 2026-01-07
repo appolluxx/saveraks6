@@ -1,7 +1,12 @@
 import { User, Action, ActionType, MapPin, SchoolStats } from '../types';
 import { SRT_RATES, LEVEL_THRESHOLDS, INITIAL_PINS } from '../constants';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL)
+  ? import.meta.env.VITE_API_URL
+  : 'http://localhost:3000';
+const API_BASE_URL = BASE.endsWith('/api') ? BASE : `${BASE}/api`;
+
+
 const STORAGE_KEY_TOKEN = 'saveraks_auth_token';
 const STORAGE_KEY_USER = 'saveraks_unit_v2';
 
@@ -39,7 +44,7 @@ export const loginUser = async (identifier: string, password: string): Promise<U
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identifier, password }),
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(10000)
     });
 
     const data = await response.json();
@@ -93,7 +98,7 @@ export const registerStudent = async (data: { studentId: string, phone: string, 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(10000)
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Student registration failed');
@@ -205,7 +210,7 @@ export const getFeed = async (): Promise<Action[]> => {
   try {
     const res = await fetch(`${API_BASE_URL}/actions`, {
       headers: getHeaders(),
-      signal: AbortSignal.timeout(3000)
+      signal: AbortSignal.timeout(10000)
     });
     if (!res.ok) throw new Error();
     return await res.json();
@@ -220,7 +225,7 @@ export const submitAction = async (data: any): Promise<Action> => {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(10000)
     });
     if (!res.ok) {
       const error = await res.json();
@@ -277,7 +282,7 @@ export const getPins = async (): Promise<MapPin[]> => {
   try {
     const res = await fetch(`${API_BASE_URL}/pins`, {
       headers: getHeaders(),
-      signal: AbortSignal.timeout(3000)
+      signal: AbortSignal.timeout(10000)
     });
     if (!res.ok) throw new Error();
     return await res.json();

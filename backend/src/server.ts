@@ -16,13 +16,16 @@ const PORT = process.env.PORT || 3000;
 // Trust proxy for Railway/Vercel
 app.set('trust proxy', 1);
 
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({
     origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
 
 const limiter = rateLimit({
     windowMs: 900000,
