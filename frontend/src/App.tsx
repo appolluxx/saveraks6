@@ -37,6 +37,19 @@ const App: React.FC = () => {
     if (updatedUser) setUser(updatedUser);
   };
 
+  useEffect(() => {
+    // Real-time update: poll server for fresh profile data every 30 seconds
+    const profileInterval = setInterval(() => {
+      if (user) {
+        getProfileFromServer().then(updatedUser => {
+          if (updatedUser) setUser(updatedUser);
+        });
+      }
+    }, 30000);
+
+    return () => clearInterval(profileInterval);
+  }, [user]);
+
   if (loading) return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6">
       <div className="relative">
@@ -78,15 +91,6 @@ const App: React.FC = () => {
       />
     );
   }
-
-  useEffect(() => {
-    // Real-time update: poll server for fresh profile data every 30 seconds
-    const profileInterval = setInterval(() => {
-      if (user) handleRefresh();
-    }, 30000);
-
-    return () => clearInterval(profileInterval);
-  }, [user]);
 
   return (
     <Layout currentTab={currentTab} setTab={setCurrentTab} user={user}>
