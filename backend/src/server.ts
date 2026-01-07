@@ -51,6 +51,9 @@ app.use('/api/actions', actionRoutes);
 
 app.listen(PORT, () => {
     logger.info(`🚀 SaveRaks 2.0 Backend running on port ${PORT}`);
+    logger.info(`🌍 Environment: ${process.env.NODE_ENV}`);
+    logger.info(`🔗 DB URL defined: ${!!process.env.DATABASE_URL}`);
+    logger.info(`📡 CORS Origin: ${process.env.CORS_ORIGIN || 'Not defined (Defaulting to open)'}`);
 });
 
 export default app;
