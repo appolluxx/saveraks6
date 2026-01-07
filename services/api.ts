@@ -8,7 +8,6 @@ const BASE_DOMAIN = (import.meta.env?.VITE_API_URL || 'http://localhost:3000').r
 // Helper to construct clean /api paths
 const getFullUrl = (endpoint: string) => {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  // If endpoint already starts with /api, use it as is, otherwise prefix with /api
   const finalPath = cleanEndpoint.startsWith('/api/') || cleanEndpoint === '/api'
     ? cleanEndpoint
     : `/api${cleanEndpoint}`;
@@ -43,8 +42,6 @@ export const api = {
 
 export const loginUser = async (identifier: string, password: string): Promise<User | null> => {
   try {
-    if (!password) throw new Error("Password is required.");
-
     const response = await fetch(getFullUrl('/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -59,12 +56,7 @@ export const loginUser = async (identifier: string, password: string): Promise<U
     localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.user));
     return data.user;
   } catch (e: any) {
-    const isNetworkError = e.name === 'AbortError' ||
-      e.message.toLowerCase().includes('fetch') ||
-      e.message.toLowerCase().includes('network') ||
-      e.message.toLowerCase().includes('failed to connect');
-
-    if (isNetworkError) {
+    if (e.message.includes('fetch') || e.name === 'AbortError') {
       const isAdmin = identifier.startsWith('ADMIN-');
       const user: User = {
         id: crypto.randomUUID(),
@@ -89,37 +81,16 @@ export const loginUser = async (identifier: string, password: string): Promise<U
   }
 };
 
-export const registerStudent = async (data: { studentId: string, phone: string, password: string }): Promise<User> => {
-  try {
-    const response = await fetch(getFullUrl('/auth/register/student'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-      signal: AbortSignal.timeout(10000)
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'Student registration failed');
-    return result.user;
-  } catch (e: any) {
-    const user: User = {
-      id: crypto.randomUUID(),
-      name: `Student ${data.studentId}`,
-      schoolId: data.studentId,
-      role: 'STUDENT',
-      totalSRT: 0,
-      currentMonthSRT: 0,
-      badges: [],
-      history: [],
-      consentGiven: true,
-      classRoom: 'M.4/1',
-      points: 0,
-      xp: 0,
-      level: 1,
-      isBanned: false
-    };
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-    return user;
-  }
+export const registerStudent = async (data: any): Promise<User> => {
+  const response = await fetch(getFullUrl('/auth/register/student'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    signal: AbortSignal.timeout(10000)
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Registration failed');
+  return result.user;
 };
 
 export const registerStaff = async (data: any): Promise<void> => {
@@ -130,86 +101,59 @@ export const registerStaff = async (data: any): Promise<void> => {
     signal: AbortSignal.timeout(10000)
   });
   const result = await response.json();
-  if (!response.ok) throw new Error(result.error || 'Staff registration failed');
+  if (!response.ok) throw new Error(result.error || 'Registration failed');
 };
 
-export const verifyStudentId = async (studentId: string): Promise<{ success: boolean, student?: any }> => {
+export const verifyStudentId = async (studentId: string) => {
   const response = await fetch(getFullUrl('/auth/verify-student'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ studentId }),
     signal: AbortSignal.timeout(10000)
   });
-  const result = await response.json();
-  return { success: result.success, student: result.student };
+  return await response.json();
 };
 
 export const getFeed = async (): Promise<Action[]> => {
   try {
-    const res = await fetch(getFullUrl('/actions'), {
-      headers: getHeaders(),
-      signal: AbortSignal.timeout(10000)
-    });
-    if (!res.ok) throw new Error();
+    const res = await fetch(getFullUrl('/actions'), { headers: getHeaders() });
     return await res.json();
-  } catch (e) {
-    return [];
-  }
+  } catch { return []; }
 };
 
 export const submitAction = async (data: any): Promise<Action> => {
-  try {
-    const res = await fetch(getFullUrl('/actions'), {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-      signal: AbortSignal.timeout(10000)
-    });
-    if (!res.ok) throw new Error();
-    return await res.json();
-  } catch (e) {
-    return {
-      id: crypto.randomUUID(),
-      userId: 'local',
-      userName: 'Local User',
-      type: data.type || ActionType.OTHER,
-      srtEarned: data.srtOverride || 10,
-      description: data.description || '',
-      timestamp: Date.now(),
-      status: 'approved'
-    };
-  }
+  const res = await fetch(getFullUrl('/actions'), {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  });
+  return await res.json();
 };
 
 export const getPins = async (): Promise<MapPin[]> => {
   try {
-    const res = await fetch(getFullUrl('/pins'), {
-      headers: getHeaders(),
-      signal: AbortSignal.timeout(10000)
-    });
-    if (!res.ok) throw new Error();
+    const res = await fetch(getFullUrl('/pins'), { headers: getHeaders() });
     return await res.json();
-  } catch (e) {
-    return INITIAL_PINS;
-  }
+  } catch { return INITIAL_PINS; }
 };
 
-export const getLeaderboard = async (): Promise<User[]> => {
-  try {
-    const res = await fetch(getFullUrl('/leaderboard'), { headers: getHeaders() });
-    return await res.json();
-  } catch (e) {
-    return [];
-  }
+export const deployNode = async (pinData: any) => {
+  const res = await fetch(getFullUrl('/pins'), {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(pinData)
+  });
+  return await res.json();
 };
 
-export const getSchoolStats = async (): Promise<SchoolStats> => {
-  try {
-    const res = await fetch(getFullUrl('/stats'), { headers: getHeaders() });
-    return await res.json();
-  } catch (e) {
-    return { totalStudents: 1240, totalPoints: 85400, pendingReports: 3, carbonSaved: 42.5 };
-  }
+export const getProfile = (): User | null => {
+  const data = localStorage.getItem(STORAGE_KEY_USER);
+  return data ? JSON.parse(data) : null;
+};
+
+export const logout = () => {
+  localStorage.removeItem(STORAGE_KEY_TOKEN);
+  localStorage.removeItem(STORAGE_KEY_USER);
 };
 
 export const logActivity = async (type: ActionType, details: any) => {
@@ -221,21 +165,20 @@ export const logActivity = async (type: ActionType, details: any) => {
   });
 };
 
-export const logout = () => {
-  localStorage.removeItem(STORAGE_KEY_TOKEN);
-  localStorage.removeItem(STORAGE_KEY_USER);
+export const getSchoolStats = async (): Promise<SchoolStats> => {
+  try {
+    const res = await fetch(getFullUrl('/stats'), { headers: getHeaders() });
+    return await res.json();
+  } catch {
+    return { totalStudents: 1240, totalPoints: 85400, pendingReports: 3, carbonSaved: 42.5 };
+  }
 };
 
-export const getProfile = (): User | null => {
-  const userData = localStorage.getItem(STORAGE_KEY_USER);
-  if (!userData) return null;
+export const getLeaderboard = async (): Promise<User[]> => {
   try {
-    const user = JSON.parse(userData);
-    if (!user.history) user.history = [];
-    return user;
-  } catch {
-    return null;
-  }
+    const res = await fetch(getFullUrl('/leaderboard'), { headers: getHeaders() });
+    return await res.json();
+  } catch { return []; }
 };
 
 export const calculateRank = (totalSRT: number): number => {
