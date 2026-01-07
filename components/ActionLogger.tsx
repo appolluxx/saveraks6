@@ -1,14 +1,14 @@
-
 import React, { useState, useRef } from 'react';
-import { Bus, Sprout, Video, Zap, CheckCircle, Loader2, ArrowRight } from 'lucide-react';
+import { Bus, Sprout, Video, Zap, CheckCircle, Loader2, ArrowRight, Clock, AlertTriangle } from 'lucide-react';
 import { logActivity } from '../services/api';
-import { ActionType } from '../types';
+import { ActionType, User } from '../types';
 
 interface ActionLoggerProps {
+  user: User;
   onActivityLogged: () => void;
 }
 
-const ActionLogger: React.FC<ActionLoggerProps> = ({ onActivityLogged }) => {
+const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) => {
   const [activeTab, setActiveTab] = useState<'TRANS' | 'ENERGY' | 'GREEN'>('TRANS');
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -22,6 +22,59 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ onActivityLogged }) => {
     { id: 'Public', label: 'นั่งรถสาธารณะ', points: 5, type: ActionType.PUBLIC_TRANSPORT },
   ];
 
+  // Logic for Time Constraint (TRANS)
+  const getCurrentStatus = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const currentTime = hours * 60 + minutes;
+
+    const morningStart = 6 * 60; // 06:00
+    const morningEnd = 9 * 60; // 09:00
+    const afternoonStart = 14 * 60 + 50; // 14:50
+    const afternoonEnd = 20 * 60 + 30; // 20:30
+
+    let period: 'MORNING' | 'AFTERNOON' | 'CLOSED' = 'CLOSED';
+    if (currentTime >= morningStart && currentTime <= morningEnd) period = 'MORNING';
+    else if (currentTime >= afternoonStart && currentTime <= afternoonEnd) period = 'AFTERNOON';
+
+    // Check history for existing logs today in the same period
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const logsToday = (user?.history || []).filter(h => {
+      const logDate = new Date(h.timestamp);
+      return logDate >= startOfToday && (
+        h.type === ActionType.WALK ||
+        h.type === ActionType.BICYCLE ||
+        h.type === ActionType.PUBLIC_TRANSPORT
+      );
+    });
+
+    const morningDone = logsToday.some(l => {
+      const d = new Date(l.timestamp);
+      const m = d.getHours() * 60 + d.getMinutes();
+      return m >= morningStart && m <= morningEnd;
+    });
+
+    const afternoonDone = logsToday.some(l => {
+      const d = new Date(l.timestamp);
+      const m = d.getHours() * 60 + d.getMinutes();
+      return m >= afternoonStart && m <= afternoonEnd;
+    });
+
+    const canLog = (period === 'MORNING' && !morningDone) || (period === 'AFTERNOON' && !afternoonDone);
+
+    let reason = "";
+    if (period === 'CLOSED') reason = "ขณะนี้อยู่นอกเวลาบันทึก (เช้า 06:00-09:00 | เย็น 14:50-20:30)";
+    else if (period === 'MORNING' && morningDone) reason = "คุณบันทึกการเดินทางช่วงเช้าไปแล้ว";
+    else if (period === 'AFTERNOON' && afternoonDone) reason = "คุณบันทึกการเดินทางช่วงเย็นไปแล้ว";
+
+    return { canLog, period, reason };
+  };
+
+  const status = getCurrentStatus();
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
@@ -29,6 +82,11 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ onActivityLogged }) => {
   };
 
   const handleSubmit = async () => {
+    if (activeTab === 'TRANS' && !status.canLog) {
+      alert(status.reason);
+      return;
+    }
+
     setLoading(true);
     try {
       if (activeTab === 'TRANS') {
@@ -87,11 +145,33 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ onActivityLogged }) => {
       <div className="bg-white p-8 rounded-unit shadow-eco border border-eco-50 transition-all min-h-[350px] flex flex-col justify-center">
         {activeTab === 'TRANS' && (
           <div className="space-y-6 animate-in fade-in">
-            <h3 className="text-xl font-bold text-slate-900 italic uppercase font-display">Log Eco-Transit</h3>
-            <div className="grid grid-cols-1 gap-2">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-xl font-bold text-slate-900 italic uppercase font-display">Log Eco-Transit</h3>
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${status.canLog ? 'bg-eco-50 border-eco-200 text-eco-600' : 'bg-amber-50 border-amber-200 text-amber-600'}`}>
+                {status.canLog ? <Clock size={12} className="animate-pulse" /> : <AlertTriangle size={12} />}
+                <span className="text-[9px] font-black uppercase tracking-wider">
+                  {status.canLog ? `Open: ${status.period}` : 'Window Locked'}
+                </span>
+              </div>
+            </div>
+
+            {!status.canLog && (
+              <div className="bg-slate-50 border border-slate-100 p-4 rounded-inner text-center space-y-2">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                  {status.reason}
+                </p>
+                <div className="flex justify-center gap-4 text-[9px] font-black text-slate-300 uppercase tracking-tighter">
+                  <span>Morning: 06:00 - 09:00</span>
+                  <span>Evening: 14:50 - 20:30</span>
+                </div>
+              </div>
+            )}
+
+            <div className={`grid grid-cols-1 gap-2 ${!status.canLog ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
               {transportModes.map(mode => (
                 <button
                   key={mode.id}
+                  disabled={!status.canLog}
                   onClick={() => setTransportMode(mode.id)}
                   className={`p-4 rounded-inner border-2 text-left transition-all flex justify-between items-center ${transportMode === mode.id ? 'border-eco-500 bg-eco-50 text-eco-700' : 'border-slate-50 text-slate-500 hover:border-slate-100'
                     }`}
@@ -101,7 +181,13 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ onActivityLogged }) => {
                 </button>
               ))}
             </div>
-            <button onClick={handleSubmit} disabled={loading} className="w-full py-5 bg-eco-500 text-white rounded-inner font-bold uppercase text-xs tracking-widest shadow-eco active:scale-95 transition-all flex items-center justify-center gap-3 mt-4">
+
+            <button
+              onClick={handleSubmit}
+              disabled={loading || !status.canLog}
+              className={`w-full py-5 rounded-inner font-bold uppercase text-xs tracking-widest shadow-eco active:scale-95 transition-all flex items-center justify-center gap-3 mt-4 ${status.canLog ? 'bg-eco-500 text-white' : 'bg-slate-200 text-slate-400'
+                }`}
+            >
               {loading ? <Loader2 className="animate-spin" /> : <>บันทึกกิจกรรม <ArrowRight size={18} /></>}
             </button>
           </div>

@@ -79,6 +79,15 @@ const App: React.FC = () => {
     );
   }
 
+  useEffect(() => {
+    // Real-time update: poll server for fresh profile data every 30 seconds
+    const profileInterval = setInterval(() => {
+      if (user) handleRefresh();
+    }, 30000);
+
+    return () => clearInterval(profileInterval);
+  }, [user]);
+
   return (
     <Layout currentTab={currentTab} setTab={setCurrentTab} user={user}>
       <main className="max-w-2xl mx-auto">
@@ -94,7 +103,7 @@ const App: React.FC = () => {
         {currentTab === 'leaderboard' && <Leaderboard />}
         {currentTab === 'profile' && <Profile user={user} onLogout={handleLogout} />}
         {currentTab === 'admin' && user.role === 'ADMIN' && <AdminDashboard />}
-        {currentTab === 'logger' && <ActionLogger onActivityLogged={handleRefresh} />}
+        {currentTab === 'logger' && <ActionLogger user={user} onActivityLogged={handleRefresh} />}
       </main>
       <InstallBanner />
     </Layout>

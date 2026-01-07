@@ -20,7 +20,12 @@ const Feed: React.FC = () => {
         setLoading(false);
       }
     };
+
     loadData();
+
+    // Real-time update: poll feed every 60 seconds
+    const interval = setInterval(loadData, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) return (
