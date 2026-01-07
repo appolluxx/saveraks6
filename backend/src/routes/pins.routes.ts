@@ -1,11 +1,12 @@
 
 import { Router } from 'express';
 import { PrismaClient, ActionType } from '@prisma/client';
+import { authenticate, AuthRequest } from '../utils/auth.middleware.js';
 
 const router = Router();
 const prisma = new PrismaClient();
 
-// Get all pins (Filter only actions with locations)
+// Get all pins
 router.get('/', async (req, res) => {
     try {
         const pins = await prisma.ecoAction.findMany({
@@ -39,21 +40,31 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Post new pin
-router.post('/', async (req, res) => {
+// Post new pin (Authenticated)
+router.post('/', authenticate, async (req: AuthRequest, res) => {
     try {
-        const { lat, lng, type, description, reportedBy } = req.body;
+        const { lat, lng, type, description } = req.body;
+        const userId = req.user?.userId;
+
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
         const pin = await prisma.ecoAction.create({
             data: {
-                userId: reportedBy || 'demo-user-id',
+                userId,
                 actionType: ActionType.report,
                 description: description,
                 locationLat: lat,
                 locationLng: lng,
                 status: 'pending',
                 pointsEarned: 5
-            }
+            },
+            include: { user: true }
+        });
+
+        // Add points for reporting
+        await prisma.user.update({
+            where: { id: userId },
+            data: { totalPoints: { increment: 5 } }
         });
 
         res.status(201).json({
@@ -63,7 +74,7 @@ router.post('/', async (req, res) => {
             type: type,
             description: pin.description,
             status: 'OPEN',
-            reportedBy: 'You',
+            reportedBy: pin.user?.fullName || 'You',
             timestamp: pin.createdAt.getTime()
         });
     } catch (error: any) {

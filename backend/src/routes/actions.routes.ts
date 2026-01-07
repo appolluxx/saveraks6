@@ -1,6 +1,8 @@
+
 import { Router } from 'express';
 import { analyzeWaste } from '../services/waste.service.js';
 import { PrismaClient } from '@prisma/client';
+import { authenticate, AuthRequest } from '../utils/auth.middleware.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -10,7 +12,7 @@ router.get('/', async (req, res) => {
     try {
         const actions = await prisma.ecoAction.findMany({
             orderBy: { createdAt: 'desc' },
-            take: 50, // Limit to last 50 actions
+            take: 50,
             include: {
                 user: {
                     select: {
@@ -22,7 +24,6 @@ router.get('/', async (req, res) => {
             }
         });
 
-        // Transform to match frontend expected format
         const transformedActions = actions.map(action => ({
             id: action.id,
             userId: action.userId,
@@ -41,16 +42,14 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Submit new action (for frontend)
-router.post('/', async (req, res) => {
+// Submit new action (authenticated)
+router.post('/', authenticate, async (req: AuthRequest, res) => {
     try {
         const { type, description, imageBase64, srtOverride } = req.body;
+        const userId = req.user?.userId;
 
-        // For demo purposes, use a demo user ID
-        // In production, this would come from auth middleware
-        const userId = 'demo-user-id';
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-        // Here you would upload image to MinIO and get URL
         const imageUrl = imageBase64 ? "https://placeholder.co/image.jpg" : null;
 
         const action = await prisma.ecoAction.create({
@@ -61,51 +60,26 @@ router.post('/', async (req, res) => {
                 imageUrl,
                 pointsEarned: srtOverride || 10,
                 status: 'approved'
-            }
+            },
+            include: { user: true }
         });
 
-        // Try to update user points (may fail if user doesn't exist)
-        try {
-            await prisma.user.update({
-                where: { id: userId },
-                data: {
-                    totalPoints: {
-                        increment: srtOverride || 10
-                    }
-                }
-            });
-        } catch (userError) {
-            // User doesn't exist, create demo user
-            await prisma.user.upsert({
-                where: { id: userId },
-                update: {},
-                create: {
-                    id: userId,
-                    studentId: 'demo-user',
-                    phone: '1234567890',
-                    passwordHash: 'demo-hash',
-                    fullName: 'Demo User',
-                    role: 'STUDENT',
-                    status: 'active',
-                    totalPoints: srtOverride || 10
-                }
-            });
-        }
+        await prisma.user.update({
+            where: { id: userId },
+            data: { totalPoints: { increment: srtOverride || 10 } }
+        });
 
-        // Transform to match frontend expected format
-        const transformedAction = {
+        res.json({
             id: action.id,
             userId: action.userId,
-            userName: 'Demo User',
+            userName: action.user?.fullName || 'User',
             type: action.actionType,
             srtEarned: action.pointsEarned,
             description: action.description,
             timestamp: action.createdAt.getTime(),
             status: action.status,
             imageUrl: action.imageUrl
-        };
-
-        res.json(transformedAction);
+        });
     } catch (error: any) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -115,40 +89,25 @@ router.post('/', async (req, res) => {
 router.post('/analyze', async (req, res) => {
     try {
         const { imageBase64 } = req.body;
-
-        if (!imageBase64) {
-            return res.status(400).json({ success: false, error: 'Image required' });
-        }
-
+        if (!imageBase64) return res.status(400).json({ success: false, error: 'Image required' });
         const analysis = await analyzeWaste(imageBase64);
-
         res.json({ success: true, wasteSorting: analysis });
     } catch (error: any) {
-        console.error('Analysis error:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// Submit waste action
-router.post('/submit', async (req, res) => {
+// Submit waste action (authenticated)
+router.post('/submit', authenticate, async (req: AuthRequest, res) => {
     try {
-        const { userId, actionType, description, imageBase64, sortingAnalysis } = req.body;
+        const { actionType, description, imageBase64, sortingAnalysis } = req.body;
+        const userId = req.user?.userId;
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-        // Here you would upload the image to MinIO and get the URL
-        // For now we'll just use a placeholder
         const imageUrl = "https://placeholder.co/image.jpg";
-
         const pointsMap: Record<string, number> = {
-            'recycling': 10,
-            'zero_waste': 8,
-            'eco_product': 5,
-            'walk': 10,
-            'bicycle': 8,
-            'commute': 5,
-            'tree_planting': 10,
-            'energy_saving': 5,
-            'report': 5,
-            'waste_sorting': 10
+            'recycling': 10, 'zero_waste': 8, 'eco_product': 5, 'walk': 10, 'bicycle': 8,
+            'commute': 5, 'tree_planting': 10, 'energy_saving': 5, 'report': 5, 'waste_sorting': 10
         };
         const points = pointsMap[actionType] || 10;
 
@@ -164,14 +123,9 @@ router.post('/submit', async (req, res) => {
             }
         });
 
-        // Update user points
         await prisma.user.update({
             where: { id: userId },
-            data: {
-                totalPoints: {
-                    increment: points
-                }
-            }
+            data: { totalPoints: { increment: points } }
         });
 
         res.json({ success: true, data: action });

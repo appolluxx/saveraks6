@@ -1,3 +1,4 @@
+
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
@@ -263,25 +264,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 // --- Utility: Verification Endpoint (Returns student info) ---
 export const verifyStudent = async (req: Request, res: Response): Promise<void> => {
-    console.log("VERIFY-STUDENT CONTROLLER HIT!");
     const { studentId } = req.body;
     try {
         const studentRecord = await prisma.studentsMaster.findUnique({ where: { studentId } });
-
         if (!studentRecord) {
-            console.log("RESPONSE STATUS: 404 - Student not found");
             res.status(404).json({ success: false, error: "Student ID not found." });
             return;
         }
-
         if (studentRecord.isRegistered) {
-            console.log("RESPONSE STATUS: 400 - Already registered");
             res.status(400).json({ success: false, error: "Already registered." });
             return;
         }
-
-        // Return student information for frontend display
-        console.log("RESPONSE STATUS: 200 - Success");
         res.json({
             success: true,
             message: "Valid Student ID.",
@@ -296,7 +289,56 @@ export const verifyStudent = async (req: Request, res: Response): Promise<void> 
         });
     } catch (e) {
         console.error("Verification error:", e);
-        console.log("RESPONSE STATUS: 500 - Server error");
         res.status(500).json({ success: false, error: "Verification failed." });
+    }
+};
+
+// --- Get Current User Data ---
+export const getCurrentUser = async (req: any, res: Response): Promise<void> => {
+    const userId = req.user?.userId;
+    if (!userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+    }
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                ecoActions: { orderBy: { createdAt: 'desc' }, take: 20 },
+                badges: { include: { badge: true } }
+            }
+        });
+        if (!user) {
+            res.status(404).json({ error: "User not found" });
+            return;
+        }
+        res.json({
+            id: user.id,
+            name: user.fullName,
+            role: user.role,
+            studentId: user.studentId,
+            email: user.email,
+            totalSRT: user.totalPoints || 0,
+            currentMonthSRT: 0,
+            badges: user.badges.map(b => b.badgeId),
+            history: user.ecoActions.map(action => ({
+                id: action.id,
+                userId: action.userId,
+                userName: user.fullName,
+                type: action.actionType,
+                srtEarned: action.pointsEarned,
+                description: action.description,
+                timestamp: action.createdAt.getTime(),
+                status: action.status,
+                imageUrl: action.imageUrl
+            })),
+            points: user.totalPoints || 0,
+            xp: user.totalPoints || 0,
+            level: Math.floor((user.totalPoints || 0) / 1000) + 1,
+            classRoom: user.classRoom
+        });
+    } catch (error) {
+        console.error("Get Me Error:", error);
+        res.status(500).json({ error: "Failed to fetch user data" });
     }
 };

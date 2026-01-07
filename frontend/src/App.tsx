@@ -10,7 +10,7 @@ import AdminDashboard from '../../components/AdminDashboard';
 import Profile from '../../pages/Profile';
 import InstallBanner from '../../components/InstallBanner';
 import ActionLogger from '../../components/ActionLogger';
-import { getProfile, initializeDemoData, logout } from '../../services/api';
+import { getProfile, getProfileFromServer, initializeDemoData, logout } from '../../services/api';
 import type { User } from '../../types';
 
 const App: React.FC = () => {
@@ -32,8 +32,9 @@ const App: React.FC = () => {
     setCurrentTab('feed');
   };
 
-  const handleRefresh = () => {
-    setUser(getProfile());
+  const handleRefresh = async () => {
+    const updatedUser = await getProfileFromServer();
+    if (updatedUser) setUser(updatedUser);
   };
 
   if (loading) return (

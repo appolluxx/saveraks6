@@ -1,8 +1,7 @@
 
 import { Router } from 'express';
-import { registerStudent, registerStaff, login, verifyStudent } from '../controllers/auth.controller';
-
-console.log("AUTH ROUTES FILE LOADED");
+import { registerStudent, registerStaff, login, verifyStudent, getCurrentUser } from '../controllers/auth.controller.js';
+import { authenticate } from '../utils/auth.middleware.js';
 
 const router = Router();
 
@@ -11,10 +10,12 @@ router.post('/login', login);
 
 // Register Student
 router.post('/verify-student', verifyStudent);
-console.log("ROUTE REGISTERED: POST /verify-student");
 router.post('/register/student', registerStudent);
 
 // Register Staff
 router.post('/register/staff', registerStaff);
+
+// Get current user profile (Sync points)
+router.get('/me', authenticate, getCurrentUser);
 
 export default router;

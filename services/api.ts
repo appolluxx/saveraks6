@@ -177,6 +177,18 @@ export const getProfile = (): User | null => {
   }
 };
 
+export const getProfileFromServer = async (): Promise<User | null> => {
+  try {
+    const res = await fetch(getFullUrl('/auth/me'), { headers: getHeaders() });
+    if (!res.ok) return null;
+    const user = await res.json();
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+    return user;
+  } catch {
+    return null;
+  }
+};
+
 export const logout = () => {
   localStorage.removeItem(STORAGE_KEY_TOKEN);
   localStorage.removeItem(STORAGE_KEY_USER);
