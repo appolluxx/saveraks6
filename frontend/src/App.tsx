@@ -11,7 +11,7 @@ import Profile from '../../pages/Profile';
 import InstallBanner from '../../components/InstallBanner';
 import ActionLogger from '../../components/ActionLogger';
 import { getProfile, initializeDemoData, logout } from '../../services/api';
-import { User } from '../../types';
+import type { User } from '../../types';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);

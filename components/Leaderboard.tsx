@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Trophy, Crown, Loader2, Users, Target, Sparkles, TrendingUp } from 'lucide-react';
-import { User } from '../types';
+import type { User } from '../types';
 import { getLeaderboard } from '../services/api';
 
 const Leaderboard: React.FC = () => {
@@ -37,13 +37,13 @@ const Leaderboard: React.FC = () => {
       </div>
 
       <div className="flex bg-white p-1.5 rounded-inner shadow-sm border border-eco-50">
-        <button 
+        <button
           onClick={() => setView('INDIVIDUAL')}
           className={`flex-1 py-3 rounded-inner text-[10px] font-bold uppercase tracking-[0.2em] transition-all active:scale-95 ${view === 'INDIVIDUAL' ? 'bg-eco-500 text-white shadow-eco' : 'text-slate-400 hover:text-eco-600'}`}
         >
           Individual
         </button>
-        <button 
+        <button
           onClick={() => setView('CLASS')}
           className={`flex-1 py-3 rounded-inner text-[10px] font-bold uppercase tracking-[0.2em] transition-all active:scale-95 ${view === 'CLASS' ? 'bg-eco-500 text-white shadow-eco' : 'text-slate-400 hover:text-eco-600'}`}
         >

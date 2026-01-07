@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { ShoppingBag, ChevronRight, X, Check, CreditCard, Sparkles } from 'lucide-react';
-import { Reward, User } from '../types';
+import type { Reward, User } from '../types';
 import { REWARDS } from '../constants';
 
 interface MarketplaceProps {
@@ -83,8 +83,8 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, onRedeem }) => {
                   disabled={user.totalSRT < selected.cost}
                   onClick={handleRedeem}
                   className={`w-full py-5 rounded-inner font-bold uppercase text-xs tracking-widest transition-all active:scale-95 ${user.totalSRT < selected.cost
-                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                      : 'bg-eco-500 text-white shadow-eco hover:bg-eco-600'
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    : 'bg-eco-500 text-white shadow-eco hover:bg-eco-600'
                     }`}
                 >
                   {user.totalSRT < selected.cost ? 'Insufficient Units' : `Authorize ${selected.cost} SRT`}

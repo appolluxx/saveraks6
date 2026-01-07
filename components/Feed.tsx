@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getFeed } from '../services/api';
-import { Action } from '../types';
+import type { Action } from '../types';
 import { Heart, MessageSquare, Share2, ShieldCheck, Leaf, Clock, Sparkles } from 'lucide-react';
 
 const Feed: React.FC = () => {

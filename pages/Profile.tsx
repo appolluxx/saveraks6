@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { User } from '../types';
+import type { User } from '../types';
 import { Shield, Trophy, Activity, LogOut, Award, ChevronRight, Leaf, Zap, Sparkles } from 'lucide-react';
 import { getProgressToNextRank } from '../services/api';
 
-interface ProfileProps { 
-  user: User; 
+interface ProfileProps {
+  user: User;
   onLogout: () => void;
 }
 
@@ -19,8 +19,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
           <span className="text-[11px] font-bold text-eco-500 uppercase tracking-[0.4em]">Identity Profile</span>
           <h2 className="text-4xl font-bold text-slate-900 font-display italic uppercase tracking-tighter">{user.name}</h2>
         </div>
-        <button 
-          onClick={onLogout} 
+        <button
+          onClick={onLogout}
           className="p-4 bg-red-50 text-red-500 border border-red-100 rounded-inner hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-90 flex items-center justify-center"
           title="Terminate Session"
         >
@@ -33,7 +33,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
         <div className="absolute -right-20 -top-20 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-1000 rotate-12 group-hover:rotate-0">
           <Leaf size={320} strokeWidth={1} />
         </div>
-        
+
         <div className="flex items-center gap-6 mb-12 relative z-10">
           <div className="w-20 h-20 bg-gradient-to-br from-eco-400 to-eco-600 rounded-inner flex items-center justify-center text-white shadow-eco-strong rotate-3 group-hover:rotate-0 transition-transform duration-700">
             <Trophy size={40} strokeWidth={2} />
@@ -50,17 +50,17 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
 
         <div className="space-y-6 relative z-10">
           <div className="flex justify-between items-end">
-             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Asset Calibration</span>
-             <div className="flex items-baseline gap-1">
-               <span className="font-mono text-3xl font-black text-eco-600 italic tracking-tighter">
-                 {user?.totalSRT?.toLocaleString() || '0'}
-               </span>
-               <span className="text-slate-400 text-xs font-bold uppercase tracking-widest ml-1">srt</span>
-             </div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Asset Calibration</span>
+            <div className="flex items-baseline gap-1">
+              <span className="font-mono text-3xl font-black text-eco-600 italic tracking-tighter">
+                {user?.totalSRT?.toLocaleString() || '0'}
+              </span>
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-widest ml-1">srt</span>
+            </div>
           </div>
-          
+
           <div className="h-5 w-full bg-slate-100 rounded-full border border-slate-200/50 overflow-hidden p-1 shadow-inner">
-            <div 
+            <div
               className="h-full bg-gradient-to-r from-eco-400 via-eco-500 to-eco-600 rounded-full shadow-[0_0_12px_rgba(34,197,94,0.3)] transition-all duration-1000"
               style={{ width: `${progressPercent}%` }}
             />

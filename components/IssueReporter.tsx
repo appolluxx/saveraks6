@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Check, X, ShieldAlert, CheckCircle2, Crosshair, Loader2 } from 'lucide-react';
 import { getPins, deployNode, getProfile } from '../services/api';
-import { MapPin as PinType } from '../types';
+import type { MapPin as PinType } from '../types';
 
 interface IssueReporterProps {
   onActivityLogged: () => void;

@@ -1,5 +1,6 @@
 
-import { User, Action, ActionType, MapPin, SchoolStats } from '../types';
+import type { User, Action, MapPin, SchoolStats } from '../types';
+import { ActionType } from '../types';
 import { SRT_RATES, LEVEL_THRESHOLDS, INITIAL_PINS } from '../constants';
 
 // Get base URL (always ensure no trailing slash or /api)
@@ -156,6 +157,11 @@ export const logout = () => {
   localStorage.removeItem(STORAGE_KEY_USER);
 };
 
+export const initializeDemoData = () => {
+  console.log("Saveรักษ์ : Smart Sustainable Mindset (SSM) v2.0 Online.");
+  console.log("ยินดีต้อนรับสู่ระบบบริหารจัดการสิ่งแวดล้อม โรงเรียนสุรศักดิ์มนตรี");
+};
+
 export const logActivity = async (type: ActionType, details: any) => {
   return await submitAction({
     type,
@@ -181,6 +187,20 @@ export const getLeaderboard = async (): Promise<User[]> => {
   } catch { return []; }
 };
 
+export const getProgressToNextRank = (totalSRT: number) => {
+  const currentLevel = calculateRank(totalSRT);
+  const currentLevelXP = LEVEL_THRESHOLDS[currentLevel - 1] || 0;
+  const nextLevelXP = LEVEL_THRESHOLDS[currentLevel] || (currentLevel * 10000);
+  const progress = ((totalSRT - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100;
+  return {
+    currentRank: currentLevel,
+    nextRank: currentLevel + 1,
+    srtInCurrentRank: totalSRT - currentLevelXP,
+    srtNeededForNext: nextLevelXP - totalSRT,
+    progressPercent: Math.min(100, Math.max(0, progress))
+  };
+};
+
 export const calculateRank = (totalSRT: number): number => {
   let level = 1;
   for (let i = 0; i < LEVEL_THRESHOLDS.length; i++) {
@@ -188,4 +208,16 @@ export const calculateRank = (totalSRT: number): number => {
     else break;
   }
   return level;
+};
+
+export const testLinePush = async (): Promise<boolean> => {
+  try {
+    const res = await fetch(getFullUrl('/admin/test-line'), {
+      method: 'POST',
+      headers: getHeaders()
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 };

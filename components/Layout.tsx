@@ -1,6 +1,6 @@
 import React from 'react';
 import Navbar from './Navbar';
-import { User } from '../types';
+import type { User } from '../types';
 import { Bell, Leaf, Settings } from 'lucide-react';
 
 interface LayoutProps {
