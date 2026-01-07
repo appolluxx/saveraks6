@@ -17,6 +17,13 @@ const VisionUnit: React.FC<{ user: any; onBack: () => void }> = ({ user, onBack 
         };
     }, []);
 
+    // Fix: Assign stream to video element whenever stream/videoRef changes
+    useEffect(() => {
+        if (useCamera && stream && videoRef.current) {
+            videoRef.current.srcObject = stream;
+        }
+    }, [useCamera, stream]);
+
     const startCamera = async () => {
         try {
             const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -142,7 +149,7 @@ const VisionUnit: React.FC<{ user: any; onBack: () => void }> = ({ user, onBack 
                 </button>
             ) : useCamera && !imagePreview ? (
                 <div className="relative aspect-square rounded-[32px] overflow-hidden bg-black">
-                    <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                    <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                     <button
                         onClick={takePhoto}
                         className="absolute bottom-8 left-1/2 -translate-x-1/2 w-20 h-20 bg-white rounded-full border-4 border-slate-300 flex items-center justify-center hover:bg-slate-100 transition-colors shadow-lg"
