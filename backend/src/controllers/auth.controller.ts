@@ -56,7 +56,7 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
                     firstName: studentRecord.firstName,
                     lastName: studentRecord.lastName,
                     fullName: `${studentRecord.prefix ? studentRecord.prefix + ' ' : ''}${studentRecord.firstName} ${studentRecord.lastName}`,
-                    classRoom: studentRecord.classRoom,
+                    classRoom: `${studentRecord.grade}/${studentRecord.room}`,
                     status: 'active' as any
                 }
             });
