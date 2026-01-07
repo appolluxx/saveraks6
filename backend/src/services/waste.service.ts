@@ -9,6 +9,7 @@ export const analyzeWaste = async (imageBase64: string) => {
             console.error("CRITICAL: GEMINI_API_KEY is not defined in environment variables.");
             throw new Error("AI service configuration missing");
         }
+        console.log(`Initializing AI Service with Key: ${apiKey.substring(0, 8)}...`);
         genAI = new GoogleGenerativeAI(apiKey);
     }
     const model = genAI.getGenerativeModel({
