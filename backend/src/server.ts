@@ -15,14 +15,31 @@ const PORT = process.env.PORT || 3000;
 
 app.use(helmet());
 app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'http://localhost:3000',
-        'http://localhost:80',
-        process.env.CORS_ORIGIN || ''
-    ].filter(Boolean),
-    credentials: true
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'http://localhost:80',
+            process.env.FRONTEND_URL,
+            process.env.CORS_ORIGIN
+        ].filter(Boolean);
+
+        // Allow if origin is in allowed list, matches vercel, or if CORS_ORIGIN is *
+        if (
+            allowedOrigins.includes(origin) ||
+            origin.endsWith('.vercel.app') ||
+            process.env.CORS_ORIGIN === '*'
+        ) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 const limiter = rateLimit({
