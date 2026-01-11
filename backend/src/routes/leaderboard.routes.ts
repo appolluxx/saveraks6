@@ -16,8 +16,15 @@ router.get('/', async (req, res) => {
                 fullName: true,
                 studentId: true,
                 totalPoints: true,
-                badges: true,
-                level: true
+                badges: {
+                    select: {
+                        badge: {
+                            select: {
+                                name: true
+                            }
+                        }
+                    }
+                }
             }
         });
 
@@ -27,8 +34,8 @@ router.get('/', async (req, res) => {
             id: user.id,
             name: user.fullName || `Student ${user.studentId}`,
             totalSRT: user.totalPoints,
-            badges: user.badges ? JSON.parse(user.badges as string) : [],
-            level: user.level || 1,
+            badges: user.badges.map((b: any) => b.badge.name),
+            level: Math.floor(user.totalPoints / 100) + 1,
             // Add other fields to satisfy strict TS if needed, or rely on partial matching
             role: 'STUDENT',
             history: []

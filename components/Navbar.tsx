@@ -31,7 +31,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, userRole }) =>
   }
 
   return (
-    <nav className="fixed bottom-6 left-6 right-6 h-20 bg-zinc-900/90 backdrop-blur-xl border border-white/5 rounded-[32px] shadow-2xl flex items-center justify-around px-2 z-50">
+    <nav className="fixed bottom-6 left-6 right-6 h-20 bg-white/90 backdrop-blur-xl border border-slate-200 rounded-[32px] shadow-2xl flex items-center justify-around px-2 z-50">
       {items.map((item) => {
         const Icon = item.icon;
         const isActive = activeTab === item.id;
@@ -39,10 +39,10 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, userRole }) =>
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
-            className={`relative flex flex-col items-center justify-center w-full h-full gap-1 transition-all duration-300 group ${isActive ? 'text-neon-green -translate-y-2' : 'text-zinc-500 hover:text-zinc-300'
+            className={`relative flex flex-col items-center justify-center w-full h-full gap-1 transition-all duration-300 group ${isActive ? 'text-emerald-600 -translate-y-2' : 'text-slate-400 hover:text-slate-600'
               }`}
           >
-            <div className={`p-3 rounded-2xl transition-all duration-300 ${isActive ? 'bg-neon-green/10 shadow-[0_0_15px_rgba(0,233,120,0.3)] scale-110' : 'group-hover:bg-zinc-800'
+            <div className={`p-3 rounded-2xl transition-all duration-300 ${isActive ? 'bg-emerald-50 shadow-sm scale-110' : 'group-hover:bg-slate-50'
               }`}>
               <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
             </div>
