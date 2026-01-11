@@ -26,10 +26,10 @@
     font-family: 'Sarabun', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #09090B;
+    background-color: #F8FAFC;
+    /* Slate-50 */
+    color: #09090B;
     /* Zinc-950 */
-    color: #F4F4F5;
-    /* Zinc-100 */
   }
 }
 

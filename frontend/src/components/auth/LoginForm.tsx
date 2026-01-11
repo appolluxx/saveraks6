@@ -60,6 +60,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
                             placeholder="12345 / email@example.com / 0812345678"
                             className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-[20px] focus:outline-none focus:border-green-500 transition-colors"
                             required
+                            autoComplete="username"
                         />
                     </div>
                 </div>

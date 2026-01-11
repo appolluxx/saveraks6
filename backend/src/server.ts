@@ -50,9 +50,12 @@ app.use((req, res, next) => {
 
 
 
+import leaderboardRoutes from './routes/leaderboard.routes.js';
+
 app.use('/api/auth', authRoutes);
 app.use('/api/actions', actionRoutes);
 app.use('/api/pins', pinRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 
 
