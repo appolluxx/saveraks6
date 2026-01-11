@@ -199,6 +199,16 @@ export const initializeDemoData = () => {
   console.log("ยินดีต้อนรับสู่ระบบบริหารจัดการสิ่งแวดล้อม โรงเรียนสุรศักดิ์มนตรี");
 };
 
+export const analyzeImage = async (imageBase64: string): Promise<any> => {
+  const res = await fetch(getFullUrl('/actions/analyze'), {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ image: imageBase64 })
+  });
+  if (!res.ok) throw new Error('Analysis failed');
+  return await res.json();
+};
+
 export const logActivity = async (type: ActionType, details: any) => {
   return await submitAction({
     type,

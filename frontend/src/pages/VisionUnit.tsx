@@ -1,240 +1,224 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Camera, RefreshCcw, Box, CheckCircle, ArrowLeft } from 'lucide-react';
-import { api } from '../../../services/api';
+import React, { useRef, useState, useEffect } from 'react';
+import { Camera, X, Zap, Scan, RefreshCw, CheckCircle, Upload, ChevronRight, Minimize } from 'lucide-react';
+import Webcam from 'react-webcam';
+import { analyzeImage, logActivity } from '../services/api';
+import { ActionType, ScanResult } from '../types';
+import { useTranslation } from 'react-i18next';
 
-const VisionUnit: React.FC<{ user: any; onBack: () => void }> = ({ user, onBack }) => {
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
+// Define the component using the correct prop type if it receives props, 
+// otherwise use empty interface or just React.FC
+const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBack }) => {
+    const { t } = useTranslation();
+    const webcamRef = useRef<Webcam>(null);
     const [analyzing, setAnalyzing] = useState(false);
-    const [result, setResult] = useState<any | null>(null);
+    const [result, setResult] = useState<ScanResult | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [camActive, setCamActive] = useState(false);
+    const [uploadMode, setUploadMode] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const [stream, setStream] = useState<MediaStream | null>(null);
-    const [useCamera, setUseCamera] = useState(false);
+
+    // Animation states
+    const [scanLine, setScanLine] = useState(false);
 
     useEffect(() => {
-        return () => {
-            stopCamera();
-        };
+        // Start camera effect
+        setCamActive(true);
+        const interval = setInterval(() => {
+            setScanLine(prev => !prev);
+        }, 2000);
+        return () => clearInterval(interval);
     }, []);
 
-    // Fix: Assign stream to video element whenever stream/videoRef changes
-    useEffect(() => {
-        if (useCamera && stream && videoRef.current) {
-            videoRef.current.srcObject = stream;
-        }
-    }, [useCamera, stream]);
-
-    const startCamera = async () => {
-        try {
-            const mediaStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' }
-            });
-            setStream(mediaStream);
-            setUseCamera(true);
-            if (videoRef.current) {
-                videoRef.current.srcObject = mediaStream;
-            }
-        } catch (err) {
-            console.error("Camera error:", err);
-            // Fallback to file input if camera access fails
-            fileInputRef.current?.click();
+    const capture = async () => {
+        const imageSrc = webcamRef.current?.getScreenshot();
+        if (imageSrc) {
+            processImage(imageSrc);
         }
     };
 
-    const stopCamera = () => {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            setStream(null);
-        }
-        setUseCamera(false);
-    };
-
-    const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                const base64 = reader.result as string;
-                setImagePreview(base64);
-                setResult(null);
-                handleAnalyze(base64);
+                processImage(reader.result as string);
             };
             reader.readAsDataURL(file);
         }
     };
 
-    const takePhoto = () => {
-        if (videoRef.current) {
-            const canvas = document.createElement('canvas');
-            canvas.width = videoRef.current.videoWidth;
-            canvas.height = videoRef.current.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx?.drawImage(videoRef.current, 0, 0);
-            const imageBase64 = canvas.toDataURL('image/jpeg');
-            setImagePreview(imageBase64);
-            stopCamera(); // Stop live preview
-            handleAnalyze(imageBase64);
-        }
-    };
-
-    const handleAnalyze = async (base64: string) => {
+    const processImage = async (base64Image: string) => {
         setAnalyzing(true);
+        setError(null);
         try {
-            // Remove data:image... prefix if present for API
-            // Actually relying on previous logic, let's keep it consistent
-            // The service seems to handle split(',') but just in case
-
-            const response = await api.post('/api/actions/analyze', {
-                imageBase64: base64
-            });
-
-            if (response.success) {
-                setResult(response.wasteSorting);
-
-                // Auto-submit logic or wait for user confirmation?
-                // The provided example auto-logs. Let's stick to the flow of confirmation.
-                // Wait, based on the `Example` code, it logs activity AFTER analysis directly.
-                // But for `waste sorting`, we usually show analysis first.
-                // Let's mimic the UI provided but keep the logic robust.
-            } else {
-                throw new Error(response.error);
-            }
+            // Strip prefix if needed, though analyzeImage might handle it
+            const base64Data = base64Image.split(',')[1];
+            const data = await analyzeImage(base64Data);
+            setResult(data);
         } catch (err) {
-            alert("System Analysis Error.");
-            setImagePreview(null);
+            console.error("Analysis failed", err);
+            setError("AI Systems Offline. Manual Override Required.");
         } finally {
             setAnalyzing(false);
         }
     };
 
-    const confirmAction = async () => {
-        if (!result || !imagePreview) return;
+    const handleConfirm = async () => {
+        if (!result) return;
         try {
-            await api.post('/api/actions/submit', {
-                userId: user.id,
-                actionType: 'waste_sorting',
-                description: `Sorted ${result.items.length} items`,
-                imageBase64: imagePreview,
-                sortingAnalysis: result
+            // Map result label to action type (simplified logic)
+            // In a real app, the AI should return the suggested ActionType
+            const actionType = ActionType.RECYCLE; // Default or map from result
+
+            await logActivity(actionType, {
+                label: result.label,
+                points: 10, // Example points
+                description: result.summary
             });
-            alert('Action Submitted Successfully! +10 Points');
-            onBack();
+            alert(t('logger.success'));
+            setResult(null);
+            if (onBack) onBack();
         } catch (e) {
-            alert("Submission Failed");
+            alert(t('common.error'));
         }
-    }
+    };
+
+    const reset = () => {
+        setResult(null);
+        setError(null);
+    };
 
     return (
-        <div className="space-y-8 p-6 pb-24">
-            <div className="flex items-center gap-4">
-                <button onClick={onBack} className="p-2 -ml-2 text-slate-400 hover:text-slate-900"><ArrowLeft /></button>
-                <div className="flex flex-col gap-1">
-                    <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Vision Unit</h2>
-                    <p className="text-slate-500 text-xs font-medium">Deploy AI sensors to categorize environment data.</p>
+        <div className="fixed inset-0 bg-black z-50 flex flex-col animate-in fade-in duration-300">
+            {/* HUD Overlay */}
+            <div className="absolute inset-0 pointer-events-none z-20">
+                <div className="absolute top-0 left-0 w-32 h-32 border-l-4 border-t-4 border-neon-green/50 rounded-tl-3xl m-4"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 border-r-4 border-t-4 border-neon-green/50 rounded-tr-3xl m-4"></div>
+                <div className="absolute bottom-0 left-0 w-32 h-32 border-l-4 border-b-4 border-neon-green/50 rounded-bl-3xl m-4"></div>
+                <div className="absolute bottom-0 right-0 w-32 h-32 border-r-4 border-b-4 border-neon-green/50 rounded-br-3xl m-4"></div>
+
+                {/* Center Crosshair */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-neon-green/30 rounded-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-neon-green rounded-full"></div>
+                    <div className="absolute top-0 w-1 h-4 bg-neon-green/50"></div>
+                    <div className="absolute bottom-0 w-1 h-4 bg-neon-green/50"></div>
+                    <div className="absolute left-0 w-4 h-1 bg-neon-green/50"></div>
+                    <div className="absolute right-0 w-4 h-1 bg-neon-green/50"></div>
                 </div>
+
+                {/* Scan Line Animation */}
+                {analyzing && (
+                    <div className="absolute top-0 left-0 w-full h-1 bg-neon-green/80 shadow-[0_0_20px_rgba(0,233,120,0.8)] animate-[scan_2s_ease-in-out_infinite]"></div>
+                )}
             </div>
 
-            {!imagePreview && !useCamera ? (
-                <button
-                    onClick={() => startCamera()}
-                    className="w-full aspect-square bg-white rounded-[32px] flex flex-col items-center justify-center gap-6 group hover:border-eco-500 transition-all border-2 border-dashed border-slate-200 shadow-sm"
-                >
-                    <div className="w-20 h-20 bg-eco-500 rounded-[24px] flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-[0_0_30px_rgba(34,197,94,0.3)]">
-                        <Camera size={32} strokeWidth={2.5} />
-                    </div>
-                    <div className="text-center">
-                        <p className="text-sm font-black uppercase tracking-widest mb-1 text-slate-900">Engage Sensor</p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Environment Scanning Ready</p>
-                    </div>
-                </button>
-            ) : useCamera && !imagePreview ? (
-                <div className="relative aspect-square rounded-[32px] overflow-hidden bg-black">
-                    <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                    <button
-                        onClick={takePhoto}
-                        className="absolute bottom-8 left-1/2 -translate-x-1/2 w-20 h-20 bg-white rounded-full border-4 border-slate-300 flex items-center justify-center hover:bg-slate-100 transition-colors shadow-lg"
-                    >
-                        <div className="w-16 h-16 bg-white border-2 border-black rounded-full" />
-                    </button>
-                    <button
-                        onClick={stopCamera}
-                        className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full"
-                    >
-                        <RefreshCcw size={20} />
-                    </button>
+            {/* Top Bar */}
+            <div className="absolute top-0 w-full p-6 flex justify-between items-start z-30 bg-gradient-to-b from-black/80 to-transparent">
+                <div>
+                    <h1 className="text-neon-green font-display text-xl uppercase tracking-[0.2em]">{t('vision.title')}</h1>
+                    <p className="text-xs text-neon-green/60 font-mono">SYS.VER.2.5 // ONLINE</p>
                 </div>
-            ) : (
-                <div className="space-y-6 animate-in zoom-in duration-300">
-                    <div className="relative aspect-square rounded-[32px] overflow-hidden border border-eco-200 bg-eco-50 p-3">
-                        <img src={imagePreview!} alt="Preview" className="w-full h-full object-cover rounded-[24px] opacity-90" />
+                <button onClick={onBack} className="p-2 border border-red-500/30 text-red-500 rounded hover:bg-red-500/20 transition-colors pointer-events-auto">
+                    <Minimize size={24} />
+                </button>
+            </div>
 
-                        {analyzing && (
-                            <div className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center gap-4 z-10">
-                                <div className="w-12 h-12 border-4 border-eco-500/20 rounded-full border-t-eco-500 animate-spin"></div>
-                                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-eco-400">Analyzing Unit...</p>
-                            </div>
-                        )}
-
-                        {!analyzing && !result && (
-                            <div className="absolute inset-0 border-[2px] border-eco-500/40 m-12 rounded-[24px] pointer-events-none">
-                                <div className="absolute -top-2 -left-2 w-8 h-8 border-t-4 border-l-4 border-eco-500"></div>
-                                <div className="absolute -top-2 -right-2 w-8 h-8 border-t-4 border-r-4 border-eco-500"></div>
-                                <div className="absolute -bottom-2 -left-2 w-8 h-8 border-b-4 border-l-4 border-eco-500"></div>
-                                <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-4 border-r-4 border-eco-500"></div>
-                            </div>
-                        )}
+            {/* Main Viewport */}
+            <div className="flex-1 relative bg-zinc-900 flex items-center justify-center overflow-hidden">
+                {!uploadMode ? (
+                    <Webcam
+                        audio={false}
+                        ref={webcamRef}
+                        screenshotFormat="image/jpeg"
+                        videoConstraints={{ facingMode: "environment" }}
+                        className="w-full h-full object-cover opacity-80"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-zinc-800">
+                        <p className="text-zinc-500 font-mono">{t('vision.ready')}</p>
                     </div>
+                )}
 
-                    {result && (
-                        <div className="space-y-4 animate-in slide-in-from-bottom-6">
-                            <div className="bg-white p-6 rounded-[32px] shadow-eco border border-eco-100 flex items-center gap-6">
-                                <div className="w-16 h-16 bg-eco-500 rounded-[24px] flex items-center justify-center text-white shrink-0">
-                                    <Box size={28} />
-                                </div>
-                                <div className="flex flex-col gap-1 overflow-hidden">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Identified Unit</p>
-                                    <h4 className="text-lg font-extrabold text-slate-900 tracking-tight truncate">{result.summary || "Waste Object"}</h4>
-                                    <div className="text-eco-600 text-[11px] font-black uppercase tracking-widest flex items-center gap-1">
-                                        <CheckCircle size={12} /> Allocation: +10 SRT
-                                    </div>
-                                </div>
-                            </div>
+                {/* Analyzing Overlay */}
+                {analyzing && (
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-40 backdrop-blur-sm">
+                        <div className="w-24 h-24 border-t-4 border-neon-green rounded-full animate-spin mb-4"></div>
+                        <p className="text-neon-green font-mono text-lg animate-pulse">{t('vision.analyzing')}</p>
+                        <div className="mt-2 text-xs text-neon-green/50 font-mono">
+                            PROCESSING NEURAL NETWORK...
+                        </div>
+                    </div>
+                )}
+            </div>
 
-                            {/* Detected Items List */}
-                            <div className="space-y-2">
-                                {result.items?.map((item: any, idx: number) => (
-                                    <div key={idx} className="bg-slate-50 p-4 rounded-[24px] flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xl">{item.bin === 'green' ? '🟢' : item.bin === 'blue' ? '🔵' : item.bin === 'yellow' ? '🟡' : '🔴'}</span>
-                                            <div>
-                                                <p className="font-bold text-slate-900 text-sm">{item.name}</p>
-                                                <p className="text-[10px] text-slate-500 font-bold uppercase">{item.binNameThai}</p>
-                                            </div>
-                                        </div>
-                                        <span className="text-xs font-mono font-bold text-slate-400">{(item.confidence * 100).toFixed(0)}%</span>
-                                    </div>
-                                ))}
-                            </div>
+            {/* Bottom Controls / Results */}
+            <div className="absolute bottom-0 w-full bg-zinc-900/90 border-t border-neon-green/30 p-6 z-30 backdrop-blur-lg rounded-t-3xl">
+                {!result ? (
+                    <div className="flex flex-col gap-4">
+                        <p className="text-center text-neon-green/70 font-mono text-xs uppercase tracking-widest mb-2">
+                            {t('vision.scan_tip')}
+                        </p>
+                        <div className="flex justify-center items-center gap-8">
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="p-4 rounded-full border border-zinc-700 bg-zinc-800 text-zinc-400 hover:text-white hover:border-white transition-all pointer-events-auto"
+                            >
+                                <Upload size={24} />
+                            </button>
+                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
 
                             <button
-                                onClick={confirmAction}
-                                className="w-full py-5 bg-eco-500 text-white rounded-[24px] font-black uppercase text-xs tracking-widest shadow-eco hover:bg-eco-600 active:scale-95 transition-all"
+                                onClick={capture}
+                                className="w-20 h-20 rounded-full border-4 border-neon-green bg-neon-green/20 flex items-center justify-center shadow-[0_0_30px_rgba(0,233,120,0.3)] hover:bg-neon-green/40 active:scale-95 transition-all pointer-events-auto"
                             >
-                                Confirm Protocol
+                                <Scan size={32} className="text-white" />
                             </button>
 
-                            <button
-                                onClick={() => { setImagePreview(null); setResult(null); setUseCamera(false); }}
-                                className="w-full py-5 bg-white text-slate-900 border border-slate-200 rounded-[24px] font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
-                            >
-                                <RefreshCcw size={16} /> Reset Sensor
+                            <button onClick={() => setUploadMode(!uploadMode)} className="p-4 rounded-full border border-zinc-700 bg-zinc-800 text-zinc-400 hover:text-white hover:border-white transition-all pointer-events-auto">
+                                <RefreshCw size={24} />
                             </button>
                         </div>
-                    )}
-                </div>
-            )}
+                    </div>
+                ) : (
+                    <div className="animate-in slide-in-from-bottom-10 space-y-6">
+                        <div className="flex items-start gap-4">
+                            <div className="w-16 h-16 bg-neon-green/10 border border-neon-green/30 rounded-lg flex items-center justify-center text-neon-green shadow-[0_0_15px_rgba(0,233,120,0.2)]">
+                                <Zap size={32} />
+                            </div>
+                            <div className="flex-1">
+                                <span className="text-[10px] font-bold text-neon-green/60 uppercase tracking-widest font-mono">Detected Object</span>
+                                <h2 className="text-2xl font-bold text-white font-display uppercase tracking-wide">{result.label}</h2>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <div className="h-1.5 w-24 bg-zinc-700 rounded-full overflow-hidden">
+                                        <div className="h-full bg-neon-blue w-3/4 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                                    </div>
+                                    <span className="text-[10px] font-mono text-neon-blue">{(result.confidence * 100).toFixed(1)}% CONFIDENCE</span>
+                                </div>
+                            </div>
+                        </div>
 
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleCapture} />
+                        <div className="bg-black/40 p-4 rounded-lg border border-white/5 space-y-2">
+                            <div className="flex justify-between">
+                                <span className="text-xs text-zinc-400 uppercase font-mono">Waste Type</span>
+                                <span className="text-xs text-white uppercase font-bold tracking-wider">{result.bin_name || 'GENERAL WASTE'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-xs text-zinc-400 uppercase font-mono">Action Protocol</span>
+                                <span className="text-xs text-neon-green uppercase font-bold tracking-wider">RECYCLE +10 SRT</span>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button onClick={reset} className="flex-1 py-4 bg-zinc-800 text-white rounded-inner font-bold uppercase text-xs tracking-widest hover:bg-zinc-700 transition-all pointer-events-auto">
+                                {t('vision.reset')}
+                            </button>
+                            <button onClick={handleConfirm} className="flex-[2] py-4 bg-neon-green text-zinc-900 rounded-inner font-bold uppercase text-xs tracking-widest shadow-[0_0_20px_rgba(0,233,120,0.4)] hover:bg-green-400 transition-all pointer-events-auto flex items-center justify-center gap-2">
+                                {t('vision.confirm')} <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

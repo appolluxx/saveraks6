@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 /* แก้ไขเส้นทางให้ถูกต้องตามโครงสร้าง Vercel (ถอยกลับไป 2 ระดับจาก frontend/src) */
 @source "../../components/**/*.{ts,tsx}";
 @source "../../pages/**/*.{ts,tsx}";
@@ -7,37 +9,27 @@
 @source "./**/*.{ts,tsx}";
 
 @theme {
-  --font-display: "Space Grotesk", sans-serif;
-  --font-sans: "DM Sans", sans-serif;
+  --font-display: "Kanit", sans-serif;
+  --font-sans: "Sarabun", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  --color-eco-50: #f0fdf4;
-  --color-eco-100: #dcfce7;
-  --color-eco-200: #bbf7d0;
-  --color-eco-300: #86efac;
-  --color-eco-400: #4ade80;
-  --color-eco-500: #22c55e;
-  --color-eco-600: #16a34a;
-  --color-eco-700: #15803d;
-  --color-eco-800: #166534;
-  --color-eco-900: #14532d;
-
-  --radius-unit: 32px;
-  --radius-inner: 24px;
-
-  --shadow-eco: 0 10px 30px -5px rgba(34, 197, 94, 0.15);
-  --shadow-eco-strong: 0 20px 40px -10px rgba(34, 197, 94, 0.25);
+  --color-neon-green: #00E978;
+  --color-neon-blue: #3B82F6;
+  --color-zinc-950: #09090B;
+  --color-zinc-900: #18181B;
+  --color-zinc-800: #27272A;
 }
 
 @layer base {
   body {
     margin: 0;
-    font-family: var(--font-sans);
+    font-family: 'Sarabun', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* ใส่พื้นหลังโดยตรงเพื่อแก้ปัญหา Build Error */
-    background: radial-gradient(circle at 0% 0%, #f0fdf4 0%, #ffffff 100%);
-    background-attachment: fixed;
+    background-color: #09090B;
+    /* Zinc-950 */
+    color: #F4F4F5;
+    /* Zinc-100 */
   }
 }
 

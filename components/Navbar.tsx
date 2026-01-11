@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { LayoutGrid, Camera, MapPin, Trophy, ShoppingBag, User, ShieldAlert, FileText } from 'lucide-react';
+import { LayoutGrid, Camera, MapPin, ShoppingBag, User, ShieldAlert, FileText } from 'lucide-react';
 import { UserRole } from '../types';
+import { useTranslation } from 'react-i18next';
 
 interface NavbarProps {
   activeTab: string;
@@ -10,51 +11,47 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, userRole }) => {
+  const { t } = useTranslation();
+
   const items = [
-    { id: 'feed', icon: LayoutGrid, label: 'Feed' },
-    { id: 'vision', icon: Camera, label: 'Scan' },
-    { id: 'logger', icon: FileText, label: 'Logs' }, // Added Manual Logs
-    { id: 'matrix', icon: MapPin, label: 'Matrix' },
-    { id: 'market', icon: ShoppingBag, label: 'Exch' },
-    { id: 'profile', icon: User, label: 'Unit' },
+    { id: 'feed', icon: LayoutGrid, label: t('common.nav.feed') },
+    { id: 'vision', icon: Camera, label: t('common.nav.vision') },
+    { id: 'logger', icon: FileText, label: 'Logs' },
+    { id: 'matrix', icon: MapPin, label: t('common.nav.matrix') },
+    { id: 'market', icon: ShoppingBag, label: t('common.nav.market') },
   ];
 
+  if (activeTab === 'profile') {
+    // User accesses profile via header, but we show state here if needed, or rely on profile tab highlighting nothing or special treatment
+  }
+
+  // Admin special item
   if (userRole === 'ADMIN') {
-    // For admin, we might replace one or add
-    items.splice(3, 0, { id: 'admin', icon: ShieldAlert, label: 'Root' });
+    items.splice(2, 0, { id: 'admin', icon: ShieldAlert, label: 'Root' });
   }
 
   return (
-    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[96%] max-w-lg z-50">
-      <div className="glass rounded-[40px] p-2 flex justify-between items-center shadow-eco-strong border-white/80">
-        {items.slice(0, 6).map((item) => { // Keep to 6 items for layout
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex-1 py-3.5 flex flex-col items-center gap-1.5 transition-all rounded-[32px] relative group active:scale-90 ${
-                isActive ? 'text-white' : 'text-slate-400 hover:text-eco-600'
+    <nav className="fixed bottom-6 left-6 right-6 h-20 bg-zinc-900/90 backdrop-blur-xl border border-white/5 rounded-[32px] shadow-2xl flex items-center justify-around px-2 z-50">
+      {items.map((item) => {
+        const Icon = item.icon;
+        const isActive = activeTab === item.id;
+        return (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            className={`relative flex flex-col items-center justify-center w-full h-full gap-1 transition-all duration-300 group ${isActive ? 'text-neon-green -translate-y-2' : 'text-zinc-500 hover:text-zinc-300'
               }`}
-            >
-              {isActive && (
-                <div className="absolute inset-0 bg-gradient-to-br from-eco-400 to-eco-600 rounded-[32px] animate-in zoom-in duration-300 shadow-eco shadow-eco-500/40"></div>
-              )}
-              <Icon 
-                size={20} 
-                strokeWidth={isActive ? 2.5 : 2} 
-                className={`relative z-10 transition-all duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} 
-              />
-              {isActive && (
-                <span className="text-[8px] font-black uppercase tracking-widest relative z-10 font-sans animate-in slide-in-from-bottom-2 duration-300">
-                  {item.label}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+          >
+            <div className={`p-3 rounded-2xl transition-all duration-300 ${isActive ? 'bg-neon-green/10 shadow-[0_0_15px_rgba(0,233,120,0.3)] scale-110' : 'group-hover:bg-zinc-800'
+              }`}>
+              <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+            </div>
+            <span className={`text-[10px] font-display font-medium absolute -bottom-3 transition-all duration-300 ${isActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'}`}>
+              {item.label}
+            </span>
+          </button>
+        );
+      })}
     </nav>
   );
 };

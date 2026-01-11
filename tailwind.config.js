@@ -1,9 +1,13 @@
 export default {
+    content: [
+        "./index.html",
+        "./src/**/*.{js,ts,jsx,tsx}",
+    ],
     theme: {
         extend: {
             fontFamily: {
-                sans: ['DM Sans', 'sans-serif'],
-                display: ['Space Grotesk', 'sans-serif'],
+                sans: ['Sarabun', 'Inter', 'sans-serif'],
+                display: ['Kanit', 'Space Grotesk', 'sans-serif'],
                 mono: ['JetBrains Mono', 'monospace'],
             },
             colors: {
@@ -13,14 +17,20 @@ export default {
                     200: '#bbf7d0',
                     300: '#86efac',
                     400: '#4ade80',
-                    500: '#22c55e', // Vibrant Natural Green
+                    500: '#22c55e', // Keeping legacy for fallback
                     600: '#16a34a',
                     700: '#15803d',
-                    800: '#166534',
-                    900: '#14532d',
                 },
-                slate: {
-                    950: '#0f172a',
+                // New Neon Palette
+                neon: {
+                    green: '#00E978',
+                    blue: '#3B82F6',
+                    dark: '#003819',
+                },
+                zinc: {
+                    850: '#1f1f22', // Custom surface
+                    900: '#18181B',
+                    950: '#09090B',
                 }
             },
             borderRadius: {
@@ -28,9 +38,21 @@ export default {
                 'inner': '24px',
             },
             boxShadow: {
-                'eco': '0 10px 30px -5px rgba(34, 197, 94, 0.15)',
-                'eco-strong': '0 20px 40px -10px rgba(34, 197, 94, 0.25)',
+                'eco': '0 10px 30px -5px rgba(0, 233, 120, 0.15)',
+                'eco-strong': '0 20px 40px -10px rgba(0, 233, 120, 0.25)',
+                'neon': '0 0 15px rgba(0, 233, 120, 0.5)',
+            },
+            animation: {
+                'scan': 'scan 2s linear infinite',
+            },
+            keyframes: {
+                scan: {
+                    '0%': { top: '0%' },
+                    '50%': { top: '100%' },
+                    '100%': { top: '0%' },
+                }
             }
         }
-    }
+    },
+    plugins: [],
 }

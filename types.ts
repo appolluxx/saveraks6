@@ -21,7 +21,25 @@ export enum ActionType {
   // Legacy/Internal
   WASTE_SORTING = 'waste_sorting',
   CLEANUP = 'cleanup',
-  OTHER = 'other'
+  OTHER = 'other',
+
+  // New Vision Modes
+  GREASE_TRAP = 'grease_trap',
+  HAZARD_SCAN = 'hazard_scan',
+  UTILITY = 'utility_check'
+}
+
+export interface ScanResult {
+  label: string;
+  confidence: number;
+  bin_name?: string;
+  bin_color?: string;
+  upcycling_tip?: string;
+  items?: any[];
+  summary?: string;
+  summaryThai?: string;
+  isFraud?: boolean;
+  reason?: string;
 }
 
 export interface Action {
