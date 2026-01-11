@@ -50,7 +50,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
 
         if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-        const imageUrl = imageBase64 ? "https://placeholder.co/image.jpg" : null;
+        const imageUrl = imageBase64 ? "https://placehold.co/600x400" : null;
 
         const action = await prisma.ecoAction.create({
             data: {
@@ -104,7 +104,7 @@ router.post('/submit', authenticate, async (req: AuthRequest, res) => {
         const userId = req.user?.userId;
         if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-        const imageUrl = "https://placeholder.co/image.jpg";
+        const imageUrl = "https://placehold.co/600x400";
         const pointsMap: Record<string, number> = {
             'recycling': 10, 'zero_waste': 8, 'eco_product': 5, 'walk': 10, 'bicycle': 8,
             'commute': 5, 'tree_planting': 10, 'energy_saving': 5, 'report': 5, 'waste_sorting': 10

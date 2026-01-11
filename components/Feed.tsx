@@ -1,159 +1,179 @@
 
 import React, { useState, useEffect } from 'react';
-import { getFeed } from '../services/api';
-import type { Action } from '../types';
-import { Heart, MessageSquare, Share2, ShieldCheck, Leaf, Clock, Sparkles } from 'lucide-react';
+import { getFeed, getProfile } from '../services/api';
+import type { Action, User } from '../types';
+import { Leaf, Clock, Scan, PenTool, Map, Trophy, ShoppingBag, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-const Feed: React.FC = () => {
+interface FeedProps {
+  setTab: (tab: string) => void;
+}
+
+const Feed: React.FC<FeedProps> = ({ setTab }) => {
   const { t } = useTranslation();
   const [feed, setFeed] = useState<Action[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await getFeed();
-        setFeed(data);
+        const feedData = await getFeed();
+        setFeed(feedData);
+        setUser(getProfile());
       } catch (err) {
-        console.error("Failed to load impact stream:", err);
+        console.error("Failed to load data:", err);
       } finally {
         setLoading(false);
       }
     };
-
     loadData();
-
-    // Real-time update: poll feed every 60 seconds
     const interval = setInterval(loadData, 60000);
     return () => clearInterval(interval);
   }, []);
 
+  const menuItems = [
+    {
+      id: 'vision',
+      name: t('common.nav.vision', 'Vision'),
+      icon: <Scan size={32} />,
+      color: 'text-neon-green',
+      bg: 'bg-neon-green/10',
+      border: 'border-neon-green/30',
+      tab: 'vision'
+    },
+    {
+      id: 'logger',
+      name: t('common.nav.logs', 'Logger'),
+      icon: <PenTool size={32} />,
+      color: 'text-neon-blue',
+      bg: 'bg-neon-blue/10',
+      border: 'border-neon-blue/30',
+      tab: 'logger'
+    },
+    {
+      id: 'matrix',
+      name: t('common.nav.matrix', 'Matrix'),
+      icon: <Map size={32} />,
+      color: 'text-purple-400',
+      bg: 'bg-purple-500/10',
+      border: 'border-purple-500/30',
+      tab: 'matrix'
+    },
+    {
+      id: 'rank',
+      name: t('common.nav.profile', 'Rank'),
+      icon: <Trophy size={32} />,
+      color: 'text-amber-400',
+      bg: 'bg-amber-500/10',
+      border: 'border-amber-500/30',
+      tab: 'leaderboard'
+    },
+  ];
+
   if (loading) return (
-    <div className="space-y-6 px-6 pt-6">
-      {[1, 2, 3].map(i => (
-        <div key={i} className="bg-zinc-900 border border-zinc-800 p-8 rounded-unit animate-pulse space-y-5 shadow-lg">
-          <div className="flex gap-4">
-            <div className="w-14 h-14 rounded-inner bg-zinc-800" />
-            <div className="space-y-3 flex-1">
-              <div className="h-5 bg-zinc-800 rounded-full w-1/3" />
-              <div className="h-3 bg-zinc-800 rounded-full w-1/4" />
-            </div>
-          </div>
-          <div className="h-48 bg-zinc-800 rounded-inner" />
-        </div>
-      ))}
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="w-8 h-8 rounded-full border-2 border-neon-green border-t-transparent animate-spin" />
     </div>
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 px-6 pt-6 pb-24">
-      <div className="flex justify-between items-end">
-        <div className="space-y-1">
-          <span className="text-[11px] font-bold text-neon-green uppercase tracking-[0.3em] font-mono">Surasakmontree Nexus</span>
-          <h3 className="text-3xl font-bold text-white font-display drop-shadow-[0_0_10px_rgba(0,233,120,0.3)]">{t('home.title')}</h3>
-          <p className="text-xs text-zinc-400 font-medium">{t('home.subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2 text-neon-green bg-zinc-900 px-4 py-2 rounded-full border border-neon-green/30 shadow-[0_0_15px_rgba(0,233,120,0.2)] transition-all hover:bg-zinc-800 cursor-default">
-          <div className="w-2 h-2 rounded-full bg-neon-green animate-pulse shadow-[0_0_8px_#00E978]"></div>
-          <span className="text-[10px] font-bold uppercase tracking-widest font-mono">{t('home.network_live')}</span>
-        </div>
-      </div>
+    <div className="flex flex-col gap-6 px-6 pt-6 pb-24 animate-in fade-in duration-500">
 
-      <div className="space-y-8">
-        {feed.length === 0 ? (
-          <div className="bg-zinc-900/50 p-16 rounded-unit text-center space-y-6 border-2 border-dashed border-zinc-800 group hover:border-neon-green/50 transition-all duration-500 backdrop-blur-sm">
-            <div className="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center mx-auto transition-transform group-hover:scale-110 duration-700 group-hover:bg-zinc-700">
-              <Leaf className="text-zinc-600 group-hover:text-neon-green transition-colors" size={48} />
-            </div>
-            <div className="space-y-2">
-              <p className="text-zinc-500 font-bold uppercase text-[11px] tracking-widest">{t('home.empty_state')}</p>
-            </div>
-          </div>
-        ) : (
-          feed.map((item) => (
-            <div key={item.id} className="bg-zinc-900 border border-zinc-800 p-8 rounded-unit space-y-6 group hover:border-neon-green/50 hover:shadow-[0_10px_40px_-10px_rgba(0,233,120,0.15)] transition-all duration-500 hover:-translate-y-1 relative overflow-hidden">
-              {/* Glow effect on hover */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-neon-green to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-
-              <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 rounded-inner bg-zinc-800 border border-zinc-700 flex items-center justify-center p-0.5 shadow-sm group-hover:border-neon-green/30 transition-colors">
-                    <img
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.userId}&backgroundColor=18181b`}
-                      className="w-full h-full object-cover rounded-inner"
-                      alt="Unit"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-lg font-bold text-zinc-100 group-hover:text-neon-green transition-colors tracking-tight font-display">{item.userName}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-neon-blue uppercase tracking-widest font-mono">
-                        <Sparkles size={10} />
-                        <span>#{item.type}</span>
-                      </div>
-                      <div className="w-1 h-1 rounded-full bg-zinc-700" />
-                      <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold tracking-wider font-mono">
-                        <Clock size={12} className="opacity-70" />
-                        <span>{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-mono text-xl font-black text-neon-green tracking-tighter leading-none drop-shadow-[0_0_8px_rgba(0,233,120,0.4)]">+{item.srtEarned} SRT</div>
-                  <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mt-1">Validated</div>
-                </div>
-              </div>
-
-              <div className="bg-zinc-950/50 p-5 rounded-inner border border-zinc-800/50 backdrop-blur-md">
-                <p className="text-sm text-zinc-300 leading-relaxed font-medium italic">"{item.description}"</p>
-              </div>
-
-              {item.imageUrl && (
-                <div className="rounded-inner overflow-hidden border border-zinc-800 aspect-[16/10] relative shadow-inner group-hover:shadow-lg transition-all duration-700">
-                  <img src={item.imageUrl} alt="Mission log" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 opacity-90 group-hover:opacity-100" />
-                  <div className="absolute top-4 right-4 bg-zinc-900/90 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 shadow-sm border border-white/10">
-                    <ShieldCheck size={16} className="text-neon-green" />
-                    <span className="text-[10px] font-bold uppercase text-zinc-200 tracking-widest font-mono">Vision Confirmed</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center gap-8 pt-2 border-t border-zinc-800/50">
-                <button className="flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-red-500 transition-all active:scale-90 group/btn">
-                  <Heart size={20} className="transition-all group-active/btn:scale-125" /> <span className="font-mono group-hover/btn:text-red-400">12</span>
-                </button>
-                <button className="flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-white transition-all active:scale-90">
-                  <MessageSquare size={20} /> <span className="font-mono">4</span>
-                </button>
-                <button className="flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-neon-blue transition-all active:scale-90 ml-auto">
-                  <Share2 size={20} />
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 p-10 rounded-unit relative overflow-hidden group shadow-lg border border-zinc-700/50 animate-in slide-in-from-bottom-5 duration-700">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 grayscale"></div>
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-1000">
-          <Leaf size={140} strokeWidth={1} className="text-white" />
-        </div>
-
-        <div className="relative z-10 text-white space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-neon-green/10 rounded-full border border-neon-green/20 backdrop-blur-md">
-            <Sparkles size={14} className="text-neon-green" />
-            <span className="font-bold uppercase tracking-widest text-[10px] text-neon-green font-mono">Eco Insight</span>
-          </div>
-          <p className="text-xl font-bold leading-tight tracking-tight font-display italic text-zinc-100">
-            "การคัดแยกขยะช่วยลดการปล่อยก๊าซเรือนกระจกได้ถึง 40% เมื่อเทียบกับการทิ้งรวม"
+      {/* 1. Header Section */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-black font-display text-white italic tracking-tighter">
+            HELLO, <span className="text-neon-green">{user?.name?.split(' ')[0] || 'UNIT'}</span>
+          </h1>
+          <p className="text-xs text-zinc-400 font-mono tracking-widest uppercase mt-1">
+            STATUS: <span className="text-neon-green">ONLINE</span> • {user?.totalSRT || 0} SRT
           </p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 font-mono">Source: Saveรักษ์ Intelligence Node</p>
+        </div>
+        <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-neon-green/30 overflow-hidden">
+          <img
+            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'guest'}&backgroundColor=18181b`}
+            alt="Profile"
+            className="w-full h-full object-cover"
+          />
         </div>
       </div>
+
+      {/* 2. Main 2x2 Grid */}
+      <div className="grid grid-cols-2 gap-4">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setTab(item.tab)}
+            className={`aspect-square rounded-[30px] ${item.bg} border ${item.border} flex flex-col items-center justify-center gap-4 transition-all active:scale-95 hover:shadow-lg hover:brightness-110`}
+          >
+            <div className={`${item.color} drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]`}>
+              {item.icon}
+            </div>
+            <span className={`text-xs font-black uppercase tracking-widest ${item.color} font-mono`}>
+              {item.name}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* 3. Market Button (Full Width) */}
+      <button
+        onClick={() => setTab('market')}
+        className="w-full py-6 rounded-[30px] bg-gradient-to-r from-zinc-800 to-zinc-900 border border-zinc-700 flex items-center justify-center gap-6 shadow-lg active:scale-98 transition-all group overflow-hidden relative"
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 translate-x-[-150%] md:group-hover:translate-x-[150%] transition-transform duration-700" />
+
+        <div className="w-12 h-12 rounded-full bg-zinc-950 border border-zinc-800 flex items-center justify-center text-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.3)]">
+          <ShoppingBag size={24} />
+        </div>
+        <div className="text-left">
+          <h3 className="text-lg font-black text-white uppercase italic tracking-wider font-display">
+            {t('common.nav.market', 'Marketplace')}
+          </h3>
+          <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono">
+            Redeem your SRT rewards
+          </p>
+        </div>
+        <div className="ml-auto pr-8 opacity-50">
+          <Leaf className="text-zinc-600" size={40} />
+        </div>
+      </button>
+
+      {/* 4. Stream Header (Moved down) */}
+      <div className="mt-4">
+        <div className="flex items-center gap-2 mb-4 opacity-70">
+          <Sparkles size={14} className="text-neon-green" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white font-mono">
+            Live Impact Stream
+          </span>
+          <div className="h-[1px] flex-1 bg-zinc-800"></div>
+        </div>
+
+        {/* 5. Compact Feed List */}
+        <div className="space-y-4">
+          {feed.slice(0, 5).map((item) => (
+            <div key={item.id} className="bg-zinc-900/50 border border-zinc-800/50 p-4 rounded-2xl flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-zinc-800 overflow-hidden shrink-0">
+                <img
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.userId}&backgroundColor=18181b`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-xs font-bold text-white truncate">{item.userName}</h4>
+                <p className="text-[10px] text-zinc-500 flex items-center gap-1 font-mono">
+                  <Clock size={8} /> {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • #{item.type}
+                </p>
+              </div>
+              <span className="text-neon-green font-black font-mono text-sm">
+                +{item.srtEarned}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 };

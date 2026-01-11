@@ -95,7 +95,7 @@ const App: React.FC = () => {
   return (
     <Layout currentTab={currentTab} setTab={setCurrentTab} user={user}>
       <main className="max-w-2xl mx-auto">
-        {currentTab === 'feed' && <Feed />}
+        {currentTab === 'feed' && <Feed setTab={setCurrentTab} />}
         {currentTab === 'vision' && <VisionUnit user={user} onBack={() => {
           handleRefresh();
           setCurrentTab('feed');

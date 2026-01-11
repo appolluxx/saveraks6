@@ -80,6 +80,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
                             className="w-full pl-12 pr-12 py-3 border-2 border-slate-200 rounded-[20px] focus:outline-none focus:border-green-500 transition-colors"
                             required
                             minLength={8}
+                            autoComplete="current-password"
                         />
                         <button
                             type="button"
