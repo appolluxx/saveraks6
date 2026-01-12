@@ -6,7 +6,7 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Sarabun', 'Inter', 'sans-serif'],
+                sans: ['Kanit', 'Sarabun', 'Inter', 'sans-serif'],
                 display: ['Kanit', 'Space Grotesk', 'sans-serif'],
                 mono: ['JetBrains Mono', 'monospace'],
             },
