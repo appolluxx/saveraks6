@@ -51,7 +51,7 @@ const App: React.FC = () => {
   }, [user]);
 
   if (loading) return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6" style={{ fontFamily: "'Kanit', sans-serif" }}>
       <div className="relative">
         <div className="w-20 h-20 border-2 border-eco-100 border-t-eco-500 rounded-full animate-spin shadow-eco" />
         <div className="absolute inset-0 m-auto w-2 h-2 bg-eco-500 rounded-full animate-pulse" />
