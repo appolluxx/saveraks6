@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Bus, Sprout, Video, Zap, CheckCircle, Loader2, ArrowRight, Clock, AlertTriangle, Upload } from 'lucide-react';
+import { Bus, Sprout, Video, Zap, Check, CloudUpload, ArrowRight, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import { logActivity } from '../services/api';
 import { ActionType, User } from '../types';
 import { useTranslation } from 'react-i18next';
@@ -113,6 +113,7 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
       setFile(null);
       alert(t('logger.success'));
     } catch (err) {
+      console.error(err);
       alert(t('common.error'));
     } finally {
       setLoading(false);
@@ -120,13 +121,21 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
   };
 
   return (
-    <div className="space-y-6 px-6 pt-6 pb-24 animate-in fade-in duration-700">
-      <div className="flex flex-col gap-1 mb-8">
-        <span className="text-[11px] font-bold text-neon-green uppercase tracking-[0.4em] font-mono">{t('logger.resource_logging')}</span>
-        <h2 className="text-3xl font-bold text-white font-display italic uppercase tracking-tighter leading-none">{t('logger.activity_hub')}</h2>
+    <div className="space-y-6 px-4 py-6 animate-in fade-in duration-700 bg-slate-50/50 rounded-[40px] mb-8">
+
+      {/* Header */}
+      <div className="flex flex-col gap-1 mb-6 px-2">
+        <span className="text-xs font-bold text-green-600 uppercase tracking-[0.2em] font-mono flex items-center gap-2">
+          <Zap size={12} className="fill-green-600" />
+          {t('logger.resource_logging')}
+        </span>
+        <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight leading-none font-sans">
+          {t('logger.activity_hub')}
+        </h2>
       </div>
 
-      <div className="flex bg-zinc-900 p-1.5 rounded-inner shadow-lg border border-zinc-800">
+      {/* Tabs: Segmented Control */}
+      <div className="flex bg-slate-100 p-1.5 rounded-[20px] shadow-sm border border-slate-200">
         {[
           { id: 'TRANS', icon: Bus, label: t('logger.travel') },
           { id: 'GREEN', icon: Sprout, label: t('logger.planting') },
@@ -135,108 +144,170 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
           <button
             key={tab.id}
             onClick={() => { setActiveTab(tab.id as any); setFile(null); }}
-            className={`flex-1 py-3 rounded-inner text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 font-mono ${activeTab === tab.id ? 'bg-neon-green text-zinc-900 shadow-[0_0_15px_rgba(0,233,120,0.4)]' : 'text-zinc-500 hover:text-white'
+            className={`flex-1 py-3 rounded-[16px] text-sm font-bold flex items-center justify-center gap-2 transition-all duration-300 ease-out active:scale-[0.98] ${activeTab === tab.id
+                ? 'bg-white text-green-700 shadow-md shadow-slate-200 ring-1 ring-black/5'
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'
               }`}
           >
-            <tab.icon size={16} />
-            {tab.label}
+            <tab.icon size={18} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
+            <span className="hidden sm:inline font-sans">{tab.label}</span>
           </button>
         ))}
       </div>
 
-      <div className="bg-zinc-900 p-8 rounded-unit shadow-lg border border-zinc-700 transition-all min-h-[350px] flex flex-col justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 brightness-100 contrast-150 grayscale mix-blend-overlay"></div>
-        <div className="relative z-10">
-          {activeTab === 'TRANS' && (
-            <div className="space-y-6 animate-in fade-in">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-xl font-bold text-white italic uppercase font-display">{t('logger.eco_transit')}</h3>
-                <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${status.canLog ? 'bg-neon-green/10 border-neon-green/30 text-neon-green' : 'bg-red-500/10 border-red-500/30 text-red-500'}`}>
-                  {status.canLog ? <Clock size={12} className="animate-pulse" /> : <AlertTriangle size={12} />}
-                  <span className="text-[9px] font-black uppercase tracking-wider font-mono">
-                    {status.canLog ? `OPEN: ${status.period}` : 'LOCKED'}
+      {/* Main Content Area */}
+      <div className="bg-white p-6 rounded-[32px] shadow-xl shadow-green-500/5 border border-slate-100 min-h-[350px] transition-all relative overflow-hidden">
+
+        {/* Background Decor */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-green-50 rounded-full blur-3xl -z-10 opacity-60 translate-x-1/3 -translate-y-1/3"></div>
+
+        {activeTab === 'TRANS' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-slate-800 font-sans">{t('logger.eco_transit')}</h3>
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${status.canLog
+                  ? 'bg-green-50 border-green-200 text-green-700'
+                  : 'bg-red-50 border-red-200 text-red-600'
+                }`}>
+                {status.canLog ? <Clock size={14} className="text-green-600" /> : <AlertTriangle size={14} />}
+                <span className="text-[11px] font-bold uppercase tracking-wider font-mono">
+                  {status.canLog ? `${status.period} OPEN` : 'CLOSED'}
+                </span>
+              </div>
+            </div>
+
+            {!status.canLog && (
+              <div className="bg-red-50/50 border border-red-100 p-4 rounded-[24px] text-center space-y-2">
+                <p className="text-xs font-bold text-red-400 uppercase tracking-widest leading-relaxed font-mono">
+                  {status.reason}
+                </p>
+                <div className="flex justify-center gap-4 text-[10px] font-bold text-red-300 uppercase tracking-wider font-mono">
+                  <span>Mrn: 06:00-09:00</span>
+                  <span>Aft: 14:50-20:30</span>
+                </div>
+              </div>
+            )}
+
+            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${!status.canLog ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+              {transportModes.map(mode => (
+                <button
+                  key={mode.id}
+                  disabled={!status.canLog}
+                  onClick={() => setTransportMode(mode.id)}
+                  className={`p-4 rounded-[24px] border-2 text-left transition-all duration-300 relative overflow-hidden group ${transportMode === mode.id
+                      ? 'bg-green-50 border-green-500 text-green-800 shadow-lg shadow-green-500/10'
+                      : 'bg-white border-transparent hover:border-slate-200 hover:bg-slate-50 text-slate-500'
+                    }`}
+                >
+                  {/* Checkmark for active state */}
+                  {transportMode === mode.id && (
+                    <div className="absolute top-3 right-3 text-green-600 bg-white rounded-full p-1 shadow-sm">
+                      <Check size={14} strokeWidth={3} />
+                    </div>
+                  )}
+
+                  <span className="block font-bold text-sm mb-1">{mode.label}</span>
+                  <span className={`text-xs font-mono font-medium ${transportMode === mode.id ? 'text-green-600' : 'text-slate-400'}`}>
+                    +{mode.points} PTS
                   </span>
-                </div>
-              </div>
+                </button>
+              ))}
+            </div>
 
-              {!status.canLog && (
-                <div className="bg-zinc-950 border border-zinc-800 p-4 rounded-inner text-center space-y-2">
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-relaxed font-mono">
-                    {status.reason}
-                  </p>
-                  <div className="flex justify-center gap-4 text-[9px] font-black text-zinc-600 uppercase tracking-tighter font-mono">
-                    <span>M: 06:00 - 09:00</span>
-                    <span>E: 14:50 - 20:30</span>
+            <button
+              onClick={handleSubmit}
+              disabled={loading || !status.canLog}
+              className={`w-full py-4 rounded-[24px] font-bold text-sm shadow-xl hover:shadow-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-6 ${status.canLog
+                  ? 'bg-green-500 text-white shadow-green-500/20 hover:bg-green-600'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                }`}
+            >
+              {loading ? <Loader2 className="animate-spin" /> : <>{t('logger.log_activity')} <ArrowRight size={18} /></>}
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'GREEN' && (
+          <div className="space-y-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500 py-4">
+            <div className="bg-green-50 border border-green-100 p-5 rounded-[28px] w-20 h-20 mx-auto flex items-center justify-center text-green-600 shadow-sm mb-4">
+              <Video size={32} />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-slate-800 font-sans">Green Evidence</h3>
+              <p className="text-slate-500 text-sm font-medium">{t('logger.green_evidence')}</p>
+            </div>
+
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="group border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-green-50 hover:border-green-400 rounded-[24px] p-8 cursor-pointer transition-all duration-300 ease-out"
+            >
+              <div className="flex flex-col items-center gap-3">
+                <CloudUpload className="h-10 w-10 text-slate-400 group-hover:text-green-500 transition-colors" />
+                {file ? (
+                  <span className="text-green-600 font-bold text-sm bg-white px-3 py-1 rounded-full shadow-sm">
+                    {file.name}
+                  </span>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-slate-600 font-bold text-sm">Click to Upload</p>
+                    <span className="text-slate-400 text-xs mt-1 block">MP4, JPG, PNG supported</span>
                   </div>
-                </div>
-              )}
-
-              <div className={`grid grid-cols-1 gap-2 ${!status.canLog ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
-                {transportModes.map(mode => (
-                  <button
-                    key={mode.id}
-                    disabled={!status.canLog}
-                    onClick={() => setTransportMode(mode.id)}
-                    className={`p-4 rounded-inner border transition-all flex justify-between items-center group relative overflow-hidden ${transportMode === mode.id ? 'border-neon-green bg-neon-green/10 text-neon-green shadow-[0_0_10px_rgba(0,233,120,0.2)]' : 'border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-white bg-zinc-950'
-                      }`}
-                  >
-                    <span className="font-bold text-sm font-display uppercase tracking-wide">{mode.label}</span>
-                    <span className="text-[10px] font-mono tracking-tighter uppercase relative z-10">+{mode.points} SRT</span>
-                  </button>
-                ))}
+                )}
               </div>
-
-              <button
-                onClick={handleSubmit}
-                disabled={loading || !status.canLog}
-                className={`w-full py-5 rounded-inner font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-3 mt-4 ${status.canLog ? 'bg-neon-green text-zinc-900 hover:bg-green-400 shadow-[0_0_20px_rgba(0,233,120,0.4)]' : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                  }`}
-              >
-                {loading ? <Loader2 className="animate-spin" /> : <>{t('logger.log_activity')} <ArrowRight size={18} strokeWidth={3} /></>}
-              </button>
             </div>
-          )}
 
-          {activeTab === 'GREEN' && (
-            <div className="space-y-6 text-center animate-in fade-in py-6">
-              <div className="bg-zinc-950 p-6 rounded-full w-20 h-20 mx-auto flex items-center justify-center text-neon-green shadow-inner border border-zinc-800 mb-2">
-                <Video size={36} />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-xl font-bold text-white italic uppercase font-display">Green Impact Evidence</h3>
-                <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest font-mono">{t('logger.green_evidence')}</p>
-              </div>
-              <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-zinc-700 bg-zinc-950/50 rounded-inner p-10 cursor-pointer hover:border-neon-green hover:bg-zinc-900 transition-all group relative">
-                <Upload className="mx-auto h-8 w-8 text-zinc-600 group-hover:text-neon-green mb-2 transition-colors" />
-                {file ? <span className="text-neon-green font-bold text-sm italic">{file.name}</span> : <span className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest group-hover:text-white transition-colors">{t('logger.select_file')}</span>}
-              </div>
-              <input type="file" ref={fileInputRef} className="hidden" accept="video/*,image/*" onChange={handleFileChange} />
-              <button onClick={handleSubmit} disabled={!file || loading} className="w-full py-5 bg-neon-green text-zinc-900 rounded-inner font-black uppercase text-xs tracking-widest shadow-[0_0_20px_rgba(0,233,120,0.4)] active:scale-95 transition-all mt-4 hover:bg-green-400 font-display">
-                {loading ? <Loader2 className="animate-spin mx-auto" /> : t('logger.submit_evidence')} (+10 SRT)
-              </button>
-            </div>
-          )}
+            <input type="file" ref={fileInputRef} className="hidden" accept="video/*,image/*" onChange={handleFileChange} />
 
-          {activeTab === 'ENERGY' && (
-            <div className="space-y-6 animate-in fade-in py-4 text-center">
-              <div className="bg-zinc-950 p-6 rounded-full w-20 h-20 mx-auto flex items-center justify-center text-neon-blue shadow-inner border border-zinc-800 mb-2">
-                <Zap size={36} />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-xl font-bold text-white italic uppercase font-display">Energy Conservation</h3>
-                <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest font-mono">{t('logger.energy_evidence')}</p>
-              </div>
-              <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-zinc-700 bg-zinc-950/50 rounded-inner p-10 cursor-pointer text-center hover:border-neon-blue hover:bg-zinc-900 transition-all group">
-                <Upload className="mx-auto h-8 w-8 text-zinc-600 group-hover:text-neon-blue mb-2 transition-colors" />
-                {file ? <span className="text-neon-blue font-bold text-sm italic">{file.name}</span> : <span className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest group-hover:text-white transition-colors">{t('logger.select_file')}</span>}
-              </div>
-              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-              <button onClick={handleSubmit} disabled={!file || loading} className="w-full py-5 bg-neon-blue text-white rounded-inner font-black uppercase text-xs tracking-widest shadow-[0_0_20px_rgba(59,130,246,0.4)] active:scale-95 transition-all mt-4 hover:bg-blue-400 font-display">
-                {loading ? <Loader2 className="animate-spin mx-auto" /> : t('logger.submit_evidence')} (+5 SRT)
-              </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!file || loading}
+              className={`w-full py-4 bg-green-500 text-white rounded-[24px] font-bold text-sm shadow-xl shadow-green-500/20 hover:bg-green-600 active:scale-[0.98] transition-all mt-4 flex justify-center items-center gap-2 ${(!file || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {loading ? <Loader2 className="animate-spin" /> : <>{t('logger.submit_evidence')} <span className="font-mono opacity-80">(+10 PTS)</span></>}
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'ENERGY' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-center py-4">
+            <div className="bg-blue-50 border border-blue-100 p-5 rounded-[28px] w-20 h-20 mx-auto flex items-center justify-center text-blue-600 shadow-sm mb-4">
+              <Zap size={32} fill="currentColor" />
             </div>
-          )}
-        </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-slate-800 font-sans">Energy Saver</h3>
+              <p className="text-slate-500 text-sm font-medium">{t('logger.energy_evidence')}</p>
+            </div>
+
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="group border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-400 rounded-[24px] p-8 cursor-pointer transition-all duration-300 ease-out"
+            >
+              <div className="flex flex-col items-center gap-3">
+                <CloudUpload className="h-10 w-10 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                {file ? (
+                  <span className="text-blue-600 font-bold text-sm bg-white px-3 py-1 rounded-full shadow-sm">
+                    {file.name}
+                  </span>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-slate-600 font-bold text-sm">Upload Evidence</p>
+                    <span className="text-slate-400 text-xs mt-1 block">Photos of turned off devices</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+
+            <button
+              onClick={handleSubmit}
+              disabled={!file || loading}
+              className={`w-full py-4 bg-blue-600 text-white rounded-[24px] font-bold text-sm shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-[0.98] transition-all mt-4 flex justify-center items-center gap-2 ${(!file || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {loading ? <Loader2 className="animate-spin" /> : <>{t('logger.submit_evidence')} <span className="font-mono opacity-80">(+5 PTS)</span></>}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
