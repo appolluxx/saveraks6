@@ -8,7 +8,7 @@ export default {
             fontFamily: {
                 sans: ['Kanit', 'Sarabun', 'Inter', 'sans-serif'],
                 display: ['Kanit', 'Space Grotesk', 'sans-serif'],
-                mono: ['JetBrains Mono', 'monospace'],
+                mono: ['Kanit', 'JetBrains Mono', 'monospace'],
             },
             colors: {
                 eco: {
