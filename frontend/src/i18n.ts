@@ -47,13 +47,21 @@ const resources = {
                 title: "Identity Profile",
                 logout: "Terminate Session",
                 rank_status: "Global Ranking Status",
-                merits: "Operational Merits"
+                merits: "Operational Merits",
+                deployment: "DEPLOYMENT",
+                asset_calibration: "Asset Calibration",
+                protocol_settings: "Protocol Settings",
+                manage_keys: "Manage unit keys and data authorization",
+                system_version: "System Version 2.5.0-Light",
+                no_merits: "No merits authenticated in this cycle.",
+                rank_unit: "Rank {{rank}} Unit"
             },
             leaderboard: {
                 performance: 'System Performance',
                 elite_units: 'Elite Units',
                 individual: 'Individual',
-                deployment: 'Deployment'
+                deployment: 'Deployment',
+                no_data: 'No node data synchronized.'
             },
             logger: {
                 resource_logging: 'Resource Logging',
@@ -77,6 +85,9 @@ const resources = {
                 energy_evidence: 'Photo of turned off appliance',
                 select_file: 'Select File',
                 submit_evidence: 'Submit Evidence'
+            },
+            layout: {
+                eco_guardian: 'ECO-GUARDIAN UNIT'
             }
         }
     },
@@ -123,13 +134,21 @@ const resources = {
                 title: "ข้อมูลส่วนตัว",
                 logout: "ออกจากระบบ",
                 rank_status: "อันดับของคุณ",
-                merits: "เหรียญตรา"
+                merits: "เหรียญตรา",
+                deployment: "สังกัด",
+                asset_calibration: "ทรัพย์สิน",
+                protocol_settings: "การตั้งค่า",
+                manage_keys: "จัดการบัญชีและการเข้าถึงข้อมูล",
+                system_version: "เวอร์ชันระบบ 2.5.0-Light",
+                no_merits: "ไม่มีเหรียญตราในรอบนี้",
+                rank_unit: "ระดับ {{rank}}"
             },
             leaderboard: {
                 performance: 'ผลการดำเนินงาน',
                 elite_units: 'ผู้ใช้งานยอดเยี่ยม',
                 individual: 'บุคคล',
-                deployment: 'ห้องเรียน'
+                deployment: 'ห้องเรียน',
+                no_data: 'ไม่พบข้อมูลในระบบ'
             },
             logger: {
                 resource_logging: 'บันทึกกิจกรรม',
@@ -153,6 +172,9 @@ const resources = {
                 energy_evidence: 'รูปการปิดไฟ/แอร์',
                 select_file: 'เลือกไฟล์',
                 submit_evidence: 'ส่งหลักฐาน'
+            },
+            layout: {
+                eco_guardian: 'หน่วยพิทักษ์รักษ์โลก'
             }
         }
     }

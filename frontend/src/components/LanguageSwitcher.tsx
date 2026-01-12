@@ -12,10 +12,10 @@ export const LanguageSwitcher: React.FC = () => {
     return (
         <button
             onClick={toggleLang}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-800 border border-zinc-700 hover:border-neon-green transition-all group shadow-lg shadow-black/20"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all group shadow-sm active:scale-95"
         >
-            <span className="text-lg leading-none filter drop-shadow-md group-hover:scale-110 transition-transform">{i18n.language === 'th' ? '🇹🇭' : '🇬🇧'}</span>
-            <span className="text-xs font-display font-bold text-zinc-300 uppercase tracking-widest group-hover:text-neon-green">
+            <span className="text-lg leading-none filter drop-shadow-sm group-hover:scale-110 transition-transform">{i18n.language === 'th' ? '🇹🇭' : '🇬🇧'}</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest group-hover:text-emerald-600 font-mono">
                 {i18n.language === 'th' ? 'TH' : 'EN'}
             </span>
         </button>

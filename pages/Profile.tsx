@@ -24,7 +24,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
         <button
           onClick={onLogout}
           className="p-4 bg-red-50 text-red-500 border border-red-100 rounded-inner hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-90 flex items-center justify-center backdrop-blur-md"
-          title="Terminate Session"
+          title={t('profile.logout')}
         >
           <LogOut size={22} />
         </button>
@@ -45,14 +45,14 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
               <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest font-mono">{t('profile.rank_status')}</span>
               <Sparkles size={12} className="text-emerald-500 animate-pulse" />
             </div>
-            <h3 className="text-3xl font-bold text-slate-800 font-display italic uppercase tracking-tight leading-none">Rank {currentRank} Unit</h3>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest font-mono">{user.classRoom || 'CENTRAL MATRIX'} DEPLOYMENT</p>
+            <h3 className="text-3xl font-bold text-slate-800 font-display italic uppercase tracking-tight leading-none">{t('profile.rank_unit', { rank: currentRank })}</h3>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest font-mono">{user.classRoom || 'CENTRAL MATRIX'} {t('profile.deployment')}</p>
           </div>
         </div>
 
         <div className="space-y-6 relative z-10">
           <div className="flex justify-between items-end">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest font-mono">Asset Calibration</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest font-mono">{t('profile.asset_calibration')}</span>
             <div className="flex items-baseline gap-1">
               <span className="font-mono text-3xl font-black text-emerald-500 italic tracking-tighter drop-shadow-sm">
                 {user?.totalSRT?.toLocaleString() || '0'}
@@ -95,7 +95,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
               <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
                 <Sparkles size={24} />
               </div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.3em] font-mono">No merits authenticated in this cycle.</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.3em] font-mono">{t('profile.no_merits')}</p>
             </div>
           ) : (
             (user?.badges || []).map(bId => (
@@ -134,8 +134,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
             <Shield size={26} strokeWidth={2} />
           </div>
           <div className="flex flex-col text-left space-y-1">
-            <span className="text-base font-bold text-slate-800 uppercase tracking-tight font-display italic group-hover:text-emerald-600 transition-colors">Protocol Settings</span>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest font-mono">Manage unit keys and data authorization</span>
+            <span className="text-base font-bold text-slate-800 uppercase tracking-tight font-display italic group-hover:text-emerald-600 transition-colors">{t('profile.protocol_settings')}</span>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest font-mono">{t('profile.manage_keys')}</span>
           </div>
         </div>
         <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 group-hover:text-emerald-500 group-hover:bg-white transition-all">
@@ -144,7 +144,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
       </button>
 
       <div className="text-center pb-8 opacity-40">
-        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em] font-mono">System Version 2.5.0-Light</p>
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em] font-mono">{t('profile.system_version')}</p>
       </div>
     </div>
   );

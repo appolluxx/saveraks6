@@ -3,6 +3,7 @@ import Navbar from './Navbar';
 import type { User } from '../types';
 import { Bell, Leaf } from 'lucide-react';
 import { LanguageSwitcher } from '../frontend/src/components/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,8 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, currentTab, setTab, user }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen relative flex flex-col font-sans bg-slate-50 text-slate-900 overflow-hidden">
       {/* Light-Organic background blobs */}
@@ -27,7 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentTab, setTab, user }) =
             <h1 className="text-xl font-bold tracking-tight leading-none text-slate-800 font-display uppercase">Saveรักษ์</h1>
             <div className="flex items-center gap-1.5 mt-1">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-              <span className="font-mono text-[10px] text-emerald-600 font-bold uppercase tracking-widest">ECO-GUARDIAN UNIT</span>
+              <span className="font-mono text-[10px] text-emerald-600 font-bold uppercase tracking-widest">{t('layout.eco_guardian')}</span>
             </div>
           </div>
         </div>
