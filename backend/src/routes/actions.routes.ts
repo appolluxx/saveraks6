@@ -134,4 +134,63 @@ router.post('/submit', authenticate, async (req: AuthRequest, res) => {
     }
 });
 
+// Research Stats Endpoint
+router.get('/stats', async (req, res) => {
+    try {
+        // 1. Group by Action Type (Usage Frequency)
+        const typeStats = await prisma.ecoAction.groupBy({
+            by: ['actionType'],
+            _count: { _all: true }
+        });
+
+        // 2. Group by User (Active Users)
+        const userStats = await prisma.ecoAction.groupBy({
+            by: ['userId'],
+            _count: { _all: true },
+            _sum: { pointsEarned: true }
+        });
+
+        // 3. Get Total System Stats
+        const total = await prisma.ecoAction.aggregate({
+            _sum: { pointsEarned: true },
+            _count: { _all: true }
+        });
+
+        // 4. Daily Activity (Simple Breakdown)
+        // Note: For advanced date truncation, raw query is often better, but keeping it simple here
+        const recentActions = await prisma.ecoAction.findMany({
+            take: 1000,
+            orderBy: { createdAt: 'desc' },
+            select: { createdAt: true, actionType: true }
+        });
+
+        const dailyStats = recentActions.reduce((acc: any, action) => {
+            const date = action.createdAt.toISOString().split('T')[0]; // YYYY-MM-DD
+            if (!acc[date]) acc[date] = 0;
+            acc[date]++;
+            return acc;
+        }, {});
+
+        res.json({
+            meta: {
+                title: "SaveRaks Usage Statistics",
+                generatedAt: new Date(),
+                purpose: "Research Data Collection"
+            },
+            summary: {
+                totalActions: total._count._all,
+                totalPointsGenerated: total._sum.pointsEarned || 0,
+                totalActiveUsers: userStats.length
+            },
+            usageByType: typeStats.map(stat => ({
+                action: stat.actionType,
+                count: stat._count._all
+            })),
+            activityTimeline: dailyStats
+        });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 export default router;
