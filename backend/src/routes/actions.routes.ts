@@ -81,6 +81,9 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
             imageUrl: action.imageUrl
         });
     } catch (error: any) {
+        if (error.code === 'P2003') {
+            return res.status(401).json({ success: false, error: 'User session invalid. Please log in again.' });
+        }
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -130,6 +133,9 @@ router.post('/submit', authenticate, async (req: AuthRequest, res) => {
 
         res.json({ success: true, data: action });
     } catch (error: any) {
+        if (error.code === 'P2003') {
+            return res.status(401).json({ success: false, error: 'User session invalid. Please log in again.' });
+        }
         res.status(500).json({ success: false, error: error.message });
     }
 });

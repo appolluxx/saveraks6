@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../../components/Layout';
+import Layout from './components/shared/Layout';
 import { LoginForm, StudentRegisterForm, StaffRegisterForm } from './components/auth';
-import Feed from '../../components/Feed';
+import Feed from './components/shared/Feed';
 import VisionUnit from './pages/VisionUnit';
-import CampusMatrix from '../../pages/CampusMatrix';
-import Marketplace from '../../components/Marketplace';
-import Leaderboard from '../../components/Leaderboard';
-import AdminDashboard from '../../components/AdminDashboard';
-import Profile from '../../pages/Profile';
-import InstallBanner from '../../components/InstallBanner';
-import ActionLogger from '../../components/ActionLogger';
-import { getProfile, getProfileFromServer, initializeDemoData, logout } from '../../services/api';
-import type { User } from '../../types';
+import CampusMatrix from './pages/shared/CampusMatrix';
+import Marketplace from './components/shared/Marketplace';
+import Leaderboard from './components/shared/Leaderboard';
+import AdminDashboard from './components/shared/AdminDashboard';
+import Profile from './pages/shared/Profile';
+import InstallBanner from './components/shared/InstallBanner';
+import ActionLogger from './components/shared/ActionLogger';
+import { getProfile, getProfileFromServer, initializeDemoData, logout } from './services/api';
+import type { User } from './types';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);

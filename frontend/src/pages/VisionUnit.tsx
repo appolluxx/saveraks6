@@ -28,7 +28,6 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
         }, 2000);
         return () => clearInterval(interval);
     }, []);
-
     const capture = async () => {
         const imageSrc = webcamRef.current?.getScreenshot();
         if (imageSrc) {
@@ -178,6 +177,14 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
                                 <RefreshCw size={24} />
                             </button>
                         </div>
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 mx-6 mt-4 animate-in fade-in slide-in-from-bottom-5">
+                                <p className="text-red-400 text-center font-mono text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                                    {error}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="animate-in slide-in-from-bottom-10 space-y-6">

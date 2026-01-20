@@ -58,9 +58,11 @@ export const loginUser = async (identifier: string, password: string): Promise<U
       throw new Error(errorMsg);
     }
 
+    logout(); // Clear any existing session first
     localStorage.setItem(STORAGE_KEY_TOKEN, data.token);
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.user));
-    return data.user;
+    const user = { ...data.user, schoolId: data.user.studentId || data.user.email };
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+    return user;
   } catch (e: any) {
     const isNetworkError = e.name === 'AbortError' ||
       e.message.toLowerCase().includes('fetch') ||
@@ -107,7 +109,7 @@ export const registerStudent = async (data: any): Promise<User> => {
     if (errorMsg === 'Phone number or Student ID already in use.') errorMsg = 'เบอร์โทรศัพท์หรือรหัสนักเรียนนี้ถูกใช้งานแล้ว';
     throw new Error(errorMsg);
   }
-  return result.user;
+  return { ...result.user, schoolId: result.user.studentId || result.user.email };
 };
 
 export const registerStaff = async (data: any): Promise<void> => {
@@ -144,6 +146,15 @@ export const submitAction = async (data: any): Promise<Action> => {
     headers: getHeaders(),
     body: JSON.stringify(data)
   });
+  if (res.status === 401) {
+    logout();
+    window.location.reload();
+    throw new Error('Session expired');
+  }
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || 'Submission failed');
+  }
   return await res.json();
 };
 
@@ -180,8 +191,14 @@ export const getProfile = (): User | null => {
 export const getProfileFromServer = async (): Promise<User | null> => {
   try {
     const res = await fetch(getFullUrl('/auth/me'), { headers: getHeaders() });
+    if (res.status === 401) {
+      logout();
+      window.location.reload();
+      return null;
+    }
     if (!res.ok) return null;
-    const user = await res.json();
+    const data = await res.json();
+    const user = { ...data, schoolId: data.studentId || data.email };
     localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
     return user;
   } catch {
