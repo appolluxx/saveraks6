@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Bus, Sprout, Video, Zap, Check, CloudUpload, ArrowRight, Loader2, Clock, AlertTriangle } from 'lucide-react';
+import { Bus, Sprout, Video, Zap, Check, Upload, ArrowRight, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import { logActivity } from '../../services/api';
 import { ActionType, User } from '../../types';
 import { useTranslation } from 'react-i18next';
@@ -242,7 +242,7 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
               className="group border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-green-50 hover:border-green-400 rounded-[24px] p-8 cursor-pointer transition-all duration-300 ease-out"
             >
               <div className="flex flex-col items-center gap-3">
-                <CloudUpload className="h-10 w-10 text-slate-400 group-hover:text-green-500 transition-colors" />
+                <Upload className="h-10 w-10 text-slate-400 group-hover:text-green-500 transition-colors" />
                 {file ? (
                   <span className="text-green-600 font-bold text-sm bg-white px-3 py-1 rounded-full shadow-sm">
                     {file.name}
@@ -283,7 +283,7 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
               className="group border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-400 rounded-[24px] p-8 cursor-pointer transition-all duration-300 ease-out"
             >
               <div className="flex flex-col items-center gap-3">
-                <CloudUpload className="h-10 w-10 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                <Upload className="h-10 w-10 text-slate-400 group-hover:text-blue-500 transition-colors" />
                 {file ? (
                   <span className="text-blue-600 font-bold text-sm bg-white px-3 py-1 rounded-full shadow-sm">
                     {file.name}
