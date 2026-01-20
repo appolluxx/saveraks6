@@ -1,8 +1,8 @@
 
 import React from 'react';
-import type { User } from '../types';
+import type { User } from '../../types';
 import { Shield, Trophy, Activity, LogOut, Award, ChevronRight, Leaf, Zap, Sparkles } from 'lucide-react';
-import { getProgressToNextRank } from '../services/api';
+import { getProgressToNextRank } from '../../services/api';
 import { useTranslation } from 'react-i18next';
 
 interface ProfileProps {
