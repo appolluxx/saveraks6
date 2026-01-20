@@ -1,11 +1,11 @@
 
 import React from 'react';
-import IssueReporter from '../components/IssueReporter';
+import IssueReporter from '../../components/shared/IssueReporter';
 
 const CampusMatrix: React.FC = () => {
   return (
     <div className="animate-in fade-in duration-500">
-      <IssueReporter onActivityLogged={() => {}} />
+      <IssueReporter onActivityLogged={() => { }} />
     </div>
   );
 };
