@@ -1,8 +1,8 @@
 import React from 'react';
 import Navbar from './Navbar';
-import type { User } from '../types';
+import type { User } from '../../types';
 import { Bell, Leaf } from 'lucide-react';
-import { LanguageSwitcher } from '../frontend/src/components/LanguageSwitcher';
+import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 
 interface LayoutProps {
