@@ -1,5 +1,5 @@
 import React from 'react';
-import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import { useInstallPrompt } from '../../../../hooks/useInstallPrompt';
 import { Download, X } from 'lucide-react';
 
 const InstallBanner: React.FC = () => {
