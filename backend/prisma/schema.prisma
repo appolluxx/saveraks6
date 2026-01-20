@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  STAFF
+  ADMIN
+}
+
+enum StaffPosition {
+  TEACHER
+  ADMIN_STAFF
+  MAINTENANCE
+  OTHER
+}
+
+enum UserStatus {
+  pending
+  active
+  suspended
+}
+
+enum ActionStatus {
+  pending
+  approved
+  rejected
+}
+
+enum ActionType {
+  waste_sorting
+  tree_planting
+  energy_saving
+  water_conservation
+  cleanup
+  recycling
+  zero_waste
+  eco_product
+  walk
+  bicycle
+  commute
+  report
+  other
+}
+
+model StudentsMaster {
+  id              String    @id @default(uuid())
+  studentId       String    @unique @map("student_id")
+  numberInClass   Int?      @map("number_in_class")
+  prefix          String?
+  firstName       String    @map("first_name")
+  lastName        String    @map("last_name")
+  grade           Int
+  room            Int
+  isRegistered    Boolean   @default(false) @map("is_registered")
+  registeredAt    DateTime? @map("registered_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("students_master")
+}
+
+model User {
+  id           String     @id @default(uuid())
+  studentId    String?    @unique @map("student_id")
+  email        String?    @unique
+  phone        String     @unique
+  passwordHash String     @map("password_hash")
+  fullName     String?    @map("full_name")
+  firstName    String?    @map("first_name")
+  lastName     String?    @map("last_name")
+  nickname     String?
+  avatarUrl    String?    @map("avatar_url")
+  role         UserRole   @default(STUDENT)
+  staffPosition StaffPosition? @map("staff_position")
+  status       UserStatus @default(pending)
+  department   String?
+  classRoom    String?    @map("class_room")
+  totalPoints  Int        @default(0) @map("total_points")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  lastLoginAt  DateTime?  @map("last_login_at")
+
+  sessions    Session[]
+  ecoActions  EcoAction[] @relation("UserActions")
+  reviewedActions EcoAction[] @relation("ReviewedActions")
+  badges      UserBadge[]
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  refresh_token String   @map("refresh_token")
+  deviceInfo   String?  @map("device_info")
+  ipAddress    String?  @map("ip_address")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model EcoAction {
+  id           String       @id @default(uuid())
+  userId       String       @map("user_id")
+  actionType   ActionType   @map("action_type")
+  description  String?
+  imageUrl     String?      @map("image_url")
+  locationLat  Decimal?     @map("location_lat") @db.Decimal(10, 8)
+  locationLng  Decimal?     @map("location_lng") @db.Decimal(11, 8)
+  locationName String?      @map("location_name")
+  pointsEarned Int          @default(0) @map("points_earned")
+  aiAnalysis   String?      @map("ai_analysis")
+  aiScore      Decimal?     @map("ai_score") @db.Decimal(3, 2)
+  status       ActionStatus @default(pending)
+  reviewedBy   String?      @map("reviewed_by")
+  reviewedAt   DateTime?    @map("reviewed_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  user     User  @relation("UserActions", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("ReviewedActions", fields: [reviewedBy], references: [id])
+
+  @@map("eco_actions")
+}
+
+model Badge {
+  id               String      @id @default(uuid())
+  name             String
+  description      String?
+  iconUrl          String?     @map("icon_url")
+  requirementType  String?     @map("requirement_type")
+  requirementValue Int?        @map("requirement_value")
+  pointsReward     Int         @default(0) @map("points_reward")
+  createdAt        DateTime    @default(now()) @map("created_at")
+
+  users UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id       String   @id @default(uuid())
+  userId   String   @map("user_id")
+  badgeId  String   @map("badge_id")
+  earnedAt DateTime @default(now()) @map("earned_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
