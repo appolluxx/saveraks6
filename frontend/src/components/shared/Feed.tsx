@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { getFeed, getProfile } from '../services/api';
-import type { Action, User } from '../types';
+import { getFeed, getProfile } from '../../services/api';
+import type { Action, User } from '../../types';
 import { Leaf, Clock, Scan, PenTool, Map, Trophy, ShoppingBag, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 

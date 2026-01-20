@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { LayoutGrid, Camera, MapPin, ShoppingBag, User, ShieldAlert, FileText } from 'lucide-react';
-import { UserRole } from '../types';
+import type { UserRole } from '../../types';
 import { useTranslation } from 'react-i18next';
 
 interface NavbarProps {

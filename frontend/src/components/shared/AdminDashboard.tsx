@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, Users, AlertCircle, Terminal, Cpu, Zap, Loader2, Send, Database, BarChart3 } from 'lucide-react';
-import { getSchoolStats, getLeaderboard, testLinePush } from '../services/api';
-import type { SchoolStats } from '../types';
+import { getSchoolStats, getLeaderboard, testLinePush } from '../../services/api';
+import type { SchoolStats } from '../../types';
 
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<SchoolStats | null>(null);

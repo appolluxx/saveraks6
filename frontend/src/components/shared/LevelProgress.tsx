@@ -1,7 +1,6 @@
-
 import React from 'react';
-import { User } from '../types';
-import { LEVEL_THRESHOLDS } from '../constants';
+import type { User } from '../../types';
+import { LEVEL_THRESHOLDS } from '../../../../constants';
 import { Power } from 'lucide-react';
 
 interface LevelProgressProps { user: User; }

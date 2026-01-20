@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { Crown, Loader2, Target, TrendingUp } from 'lucide-react';
-import type { User } from '../types';
-import { getLeaderboard } from '../services/api';
+import type { User } from '../../types';
+import { getLeaderboard } from '../../services/api';
 import { useTranslation } from 'react-i18next';
 
 const Leaderboard: React.FC = () => {

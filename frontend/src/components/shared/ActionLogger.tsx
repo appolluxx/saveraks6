@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Bus, Sprout, Video, Zap, Check, CloudUpload, ArrowRight, Loader2, Clock, AlertTriangle } from 'lucide-react';
-import { logActivity } from '../services/api';
-import { ActionType, User } from '../types';
+import { logActivity } from '../../services/api';
+import { ActionType, User } from '../../types';
 import { useTranslation } from 'react-i18next';
 
 interface ActionLoggerProps {

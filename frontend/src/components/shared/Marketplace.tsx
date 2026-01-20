@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { ShoppingBag, ChevronRight, X, Check, CreditCard, Sparkles } from 'lucide-react';
-import type { Reward, User } from '../types';
-import { REWARDS } from '../constants';
+import type { User, Reward } from '../../types';
+import { REWARDS } from '../../../../constants';
 import { useTranslation } from 'react-i18next';
 
 interface MarketplaceProps {

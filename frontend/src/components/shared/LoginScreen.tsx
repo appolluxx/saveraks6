@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { ArrowRight, Loader2 } from 'lucide-react';
-import { loginUser, registerUser } from '../services/api';
-import { User } from '../types';
+import { loginUser, registerUser } from '../../services/api';
+import { User } from '../../types';
 import Logo from './Logo';
 
 interface LoginScreenProps {

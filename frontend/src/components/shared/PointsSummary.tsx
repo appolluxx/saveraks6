@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { User } from '../types';
+import type { User } from '../../types';
 import { TrendingUp } from 'lucide-react';
 
 interface PointsSummaryProps {
