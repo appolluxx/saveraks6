@@ -158,13 +158,7 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
                             {t('vision.scan_tip')}
                         </p>
                         <div className="flex justify-center items-center gap-8">
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="p-4 rounded-full border border-zinc-700 bg-zinc-800 text-zinc-400 hover:text-white hover:border-white transition-all pointer-events-auto"
-                            >
-                                <Upload size={24} />
-                            </button>
-                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+
 
                             <button
                                 onClick={capture}
