@@ -5,6 +5,11 @@ import { authenticate } from '../utils/auth.middleware.js';
 
 const router = Router();
 
+// Debug Route
+import { testDbConnection } from '../controllers/debug.controller.js';
+router.get('/test-db', testDbConnection);
+
+
 // Login
 router.post('/login', login);
 
