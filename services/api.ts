@@ -151,6 +151,14 @@ export const submitAction = async (data: any): Promise<Action> => {
     window.location.reload();
     throw new Error('Session expired');
   }
+  // Handle duplicate image error
+  if (res.status === 409) {
+    const errorData = await res.json();
+    if (errorData.code === 'DUPLICATE_IMAGE') {
+      throw new Error('⚠️ รูปภาพนี้เคยถูกใช้แล้ว กรุณาถ่ายรูปใหม่');
+    }
+    throw new Error(errorData.error || 'ข้อมูลซ้ำ');
+  }
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.error || 'Submission failed');

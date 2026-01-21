@@ -115,6 +115,7 @@ model EcoAction {
   actionType   ActionType   @map("action_type")
   description  String?
   imageUrl     String?      @map("image_url")
+  imageHash    String?      @map("image_hash")
   locationLat  Decimal?     @map("location_lat") @db.Decimal(10, 8)
   locationLng  Decimal?     @map("location_lng") @db.Decimal(11, 8)
   locationName String?      @map("location_name")
@@ -125,10 +126,17 @@ model EcoAction {
   reviewedBy   String?      @map("reviewed_by")
   reviewedAt   DateTime?    @map("reviewed_at")
   createdAt    DateTime     @default(now()) @map("created_at")
+  
+  // Commute verification fields
+  ticketType     String?    @map("ticket_type")
+  ticketImageUrl String?    @map("ticket_image_url")
+  verifiedAt     DateTime?  @map("verified_at")
+  distanceKm     Decimal?   @map("distance_km") @db.Decimal(5, 2)
 
   user     User  @relation("UserActions", fields: [userId], references: [id], onDelete: Cascade)
   reviewer User? @relation("ReviewedActions", fields: [reviewedBy], references: [id])
 
+  @@index([imageHash])
   @@map("eco_actions")
 }
 

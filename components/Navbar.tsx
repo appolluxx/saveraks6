@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutGrid, Camera, MapPin, ShoppingBag, User, ShieldAlert, FileText } from 'lucide-react';
+import { LayoutGrid, Camera, MapPin, ShoppingBag, User, ShieldAlert, FileText, Bus } from 'lucide-react';
 import { UserRole } from '../types';
 import { useTranslation } from 'react-i18next';
 
@@ -16,8 +16,8 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, userRole }) =>
   const items = [
     { id: 'feed', icon: LayoutGrid, label: t('common.nav.feed') },
     { id: 'vision', icon: Camera, label: t('common.nav.vision') },
+    { id: 'commute', icon: Bus, label: 'เดินทาง' },
     { id: 'logger', icon: FileText, label: 'Logs' },
-    { id: 'matrix', icon: MapPin, label: t('common.nav.matrix') },
     { id: 'market', icon: ShoppingBag, label: t('common.nav.market') },
   ];
 

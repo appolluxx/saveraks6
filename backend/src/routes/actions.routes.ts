@@ -42,13 +42,44 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Submit new action (authenticated)
+// Submit new action (authenticated) - with duplicate image detection
 router.post('/', authenticate, async (req: AuthRequest, res) => {
     try {
-        const { type, description, imageBase64, srtOverride } = req.body;
+        const {
+            type,
+            description,
+            imageBase64,
+            srtOverride,
+            imageHash,
+            locationLat,
+            locationLng,
+            ticketType,
+            distanceKm
+        } = req.body;
         const userId = req.user?.userId;
 
         if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        // 🔐 Security: Check for duplicate image hash
+        if (imageHash) {
+            const existingAction = await prisma.ecoAction.findFirst({
+                where: {
+                    imageHash,
+                    // Only check actions from the same user to prevent false positives
+                    userId
+                }
+            });
+
+            if (existingAction) {
+                return res.status(409).json({
+                    success: false,
+                    error: 'รูปภาพนี้เคยถูกใช้แล้ว กรุณาถ่ายรูปใหม่',
+                    code: 'DUPLICATE_IMAGE',
+                    originalActionId: existingAction.id,
+                    originalTimestamp: existingAction.createdAt.getTime()
+                });
+            }
+        }
 
         const imageUrl = imageBase64 ? "https://placehold.co/600x400" : null;
 
@@ -58,8 +89,14 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
                 actionType: type,
                 description,
                 imageUrl,
+                imageHash: imageHash || null,
+                locationLat: locationLat ? parseFloat(locationLat) : null,
+                locationLng: locationLng ? parseFloat(locationLng) : null,
+                ticketType: ticketType || null,
+                distanceKm: distanceKm ? parseFloat(distanceKm) : null,
                 pointsEarned: srtOverride || 10,
-                status: 'approved'
+                status: 'approved',
+                verifiedAt: locationLat && locationLng ? new Date() : null
             },
             include: { user: true }
         });
@@ -78,7 +115,9 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
             description: action.description,
             timestamp: action.createdAt.getTime(),
             status: action.status,
-            imageUrl: action.imageUrl
+            imageUrl: action.imageUrl,
+            locationVerified: !!(locationLat && locationLng),
+            ticketType: action.ticketType
         });
     } catch (error: any) {
         if (error.code === 'P2003') {

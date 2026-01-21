@@ -5,6 +5,7 @@ import { LoginForm, StudentRegisterForm, StaffRegisterForm } from './frontend/sr
 import Feed from './components/Feed';
 import VisionUnit from './pages/VisionUnit';
 import CampusMatrix from './pages/CampusMatrix';
+import CommuteVerification from './pages/CommuteVerification';
 import Marketplace from './components/Marketplace';
 import Leaderboard from './components/Leaderboard';
 import AdminDashboard from './components/AdminDashboard';
@@ -93,6 +94,10 @@ const App: React.FC = () => {
           setCurrentTab('feed');
         }} />}
         {currentTab === 'matrix' && <CampusMatrix />}
+        {currentTab === 'commute' && <CommuteVerification onComplete={() => {
+          handleRefresh();
+          setCurrentTab('feed');
+        }} />}
         {currentTab === 'market' && <Marketplace user={user} onRedeem={() => {
           handleRefresh();
         }} />}
