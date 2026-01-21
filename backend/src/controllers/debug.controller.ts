@@ -47,7 +47,7 @@ export const testGeminiConnection = async (req: Request, res: Response) => {
             throw new Error("GEMINI_API_KEY is missing or invalid in .env");
         }
 
-        const modelName = "gemini-1.5-flash-latest"; // Or gemini-pro
+        const modelName = "gemini-1.5-flash-001"; // Or gemini-pro
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
         const payload = {
