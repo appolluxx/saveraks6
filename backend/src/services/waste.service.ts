@@ -1,102 +1,97 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-// No top-level initialization for more robustness with env variables
-let genAI: GoogleGenerativeAI | null = null;
+import { GoogleGenAI } from "@google/genai";
 
-export const analyzeWaste = async (imageBase64: string) => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-        console.error("CRITICAL: GEMINI_API_KEY is not defined in environment variables.");
-        throw new Error("AI service configuration missing");
+// Initialize the Google GenAI client
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+/**
+ * Sanitizes base64 strings to ensure they are raw bytes for the API.
+ */
+const cleanBase64 = (base64: string): string => {
+    return base64.includes(',') ? base64.split(',')[1] : base64;
+};
+
+const extractJson = (text: string | undefined): any => {
+    if (!text) return {};
+    try {
+        const cleanText = text.replace(/```json\n?|```/g, "").trim();
+        return JSON.parse(cleanText);
+    } catch (error) {
+        console.error("AI JSON Parse Error:", text);
+        return {};
     }
+};
 
-    const modelName = "gemini-flash-latest";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-
-    const parts = imageBase64.split(',');
-    const base64Data = parts.length > 1 ? parts[1] : parts[0];
-
-    console.log(`[AI Debug] Image received. Total Length: ${imageBase64.length}`);
-    console.log(`[AI Debug] Base64 Data Length: ${base64Data.length}`);
-    console.log(`[AI Debug] Base64 Prefix: ${base64Data.substring(0, 30)}...`);
-
-    if (base64Data.length < 100) {
-        throw new Error("Image data is too small or invalid.");
+export const analyzeWaste = async (base64Image: string): Promise<any> => {
+    console.log(`[AI Service] Starting analysis. Image size: ${base64Image.length}`);
+    if (!process.env.GEMINI_API_KEY) {
+        throw new Error("GEMINI_API_KEY missing");
     }
-
-    const payload = {
-        contents: [{
-            parts: [
-                { text: "นี่คือรูปขยะ ช่วยบอกหน่อยว่าเป็นขยะประเภทไหน (ขยะเปียก, รีไซเคิล, ทั่วไป, อันตราย) ตอบแค่ชื่อประเภท" },
-                {
-                    inline_data: {
-                        mime_type: "image/jpeg",
-                        data: base64Data
-                    }
-                }
-            ]
-        }]
-    };
 
     try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+        // We use gemini-1.5-flash as it is confirmed to be in your available models list
+        // and supports vision tasks well.
+        const model = 'gemini-1.5-flash';
+        const sanitizedBase64 = cleanBase64(base64Image);
+
+        const systemInstruction = `You are a Waste Management Specialist for Surasakmontree School (SaveRak Project).
+    Analyze the uploaded waste image and provide specific sorting instructions.
+    
+    Thailand Sorting Standards:
+    - GREEN (ถังเขียว): Wet/Organic Waste (ขยะเปียก/อินทรีย์) -> Food scraps, leaves (bin: "green")
+    - BLUE (ถังฟ้า): General Waste (ขยะทั่วไป) -> Snack bags, foam, dirty plastic (bin: "blue")
+    - YELLOW (ถังเหลือง): Recyclable Waste (ขยะรีไซเคิล) -> Clean bottles, cans, paper (bin: "yellow")
+    - RED (ถังแดง): Hazardous Waste (ขยะอันตราย) -> Batteries, spray cans, electronics (bin: "red")
+
+    IMPORTANT: Return ONLY valid JSON with this structure:
+    {
+      "items": [
+        {
+          "name": "Object name (English)",
+          "bin": "green | blue | yellow | red",
+          "binNameThai": "ถัง... (Thai)",
+          "confidence": 0.95,
+          "instructions": "Instruction (English)",
+          "instructionsThai": "คำแนะนำ (Thai)",
+          "category": "Material type"
+        }
+      ],
+      "summary": "Short summary (English)",
+      "summaryThai": "สรุปสั้นๆ (Thai)",
+      "label": "Main object name",
+      "bin_name": "Bin Name (Thai)",
+      "hasHazardous": boolean,
+      "needsCleaning": boolean,
+      "overallComplexity": "low | medium | high"
+    }`;
+
+        console.log(`[AI Service] Sending request to model: ${model}`);
+
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: [
+                {
+                    role: "user",
+                    parts: [
+                        { text: "Analyze this waste image and tell me which bin it belongs to." },
+                        { inlineData: { mimeType: 'image/jpeg', data: sanitizedBase64 } }
+                    ]
+                }
+            ],
+            config: {
+                systemInstruction: systemInstruction,
+                responseMimeType: "application/json",
+            }
         });
 
-        const data: any = await response.json();
+        console.log("[AI Service] Response received from Google.");
+        const jsonResponse = extractJson(response.text());
+        console.log("[AI Service] Parsed JSON:", JSON.stringify(jsonResponse).substring(0, 100) + "...");
 
-        if (!response.ok) {
-            console.error("Gemini API Error Response:", JSON.stringify(data));
-            throw new Error(data.error?.message || "Unknown API Error");
-        }
-
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Unknown";
-        console.log("Gemini Response:", text);
-
-        // Map simple response to the JSON structure expected by Frontend
-        // Logic requested:
-        // Wet (ขยะเปียก) -> Green Bin
-        // Recycle (รีไซเคิล) -> Yellow Bin
-        // Hazardous (อันตราย) -> Red Bin
-        // General (ทั่วไป) -> Blue Bin
-        let bin = 'blue';
-        let binNameThai = 'ขยะทั่วไป';
-
-        if (text.includes('ขยะเปียก')) {
-            bin = 'green';
-            binNameThai = 'ขยะเปียก';
-        } else if (text.includes('รีไซเคิล')) {
-            bin = 'yellow';
-            binNameThai = 'ขยะรีไซเคิล';
-        } else if (text.includes('อันตราย')) {
-            bin = 'red';
-            binNameThai = 'ขยะอันตราย';
-        }
-
-        return {
-            items: [{
-                name: "Detected Item",
-                bin: bin,
-                binNameThai: binNameThai,
-                confidence: 1.0,
-                instructions: "Dispose in the indicated bin.",
-                instructionsThai: "ทิ้งลงถังตามที่ระบุ",
-                category: text
-            }],
-            summary: `Identified as ${text}`,
-            summaryThai: `ผลการวิเคราะห์: ${text}`,
-            hasHazardous: bin === 'red',
-            needsCleaning: bin === 'green',
-            overallComplexity: "easy"
-        };
+        return jsonResponse;
 
     } catch (error: any) {
-        console.error("AI Analysis Detailed Error:", {
-            error: error.message,
-            stack: error.stack,
-            responseTime: new Date().toISOString()
-        });
+        console.error("Gemini Vision Error:", error);
+        // Return a fallback error object instead of crashing completely if possible
         throw new Error(`AI Analysis Failed: ${error.message}`);
     }
 };
