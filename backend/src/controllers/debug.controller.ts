@@ -49,8 +49,8 @@ export const testGeminiConnection = async (req: Request, res: Response) => {
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        // Fallback to simpler model if flash is not available
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        // Updated package, using 1.5-flash (Vision capable)
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = "Please reply with just the word 'ONLINE' if you receive this.";
         const result = await model.generateContent(prompt);
