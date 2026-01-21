@@ -9,7 +9,7 @@ export const analyzeWaste = async (imageBase64: string) => {
         throw new Error("AI service configuration missing");
     }
 
-    const modelName = "gemini-pro";
+    const modelName = "gemini-1.5-flash";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
     const parts = imageBase64.split(',');
