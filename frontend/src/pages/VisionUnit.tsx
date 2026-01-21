@@ -151,7 +151,7 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
             </div>
 
             {/* Bottom Controls / Results */}
-            <div className="absolute bottom-0 w-full bg-zinc-900/90 border-t border-neon-green/30 p-6 z-30 backdrop-blur-lg rounded-t-3xl">
+            <div className="absolute bottom-0 w-full bg-zinc-900/90 border-t border-neon-green/30 p-6 pb-24 z-30 backdrop-blur-lg rounded-t-3xl safe-area-bottom">
                 {!result ? (
                     <div className="flex flex-col gap-4">
                         <p className="text-center text-neon-green/70 font-mono text-xs uppercase tracking-widest mb-2">
