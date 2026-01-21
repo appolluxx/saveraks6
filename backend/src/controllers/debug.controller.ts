@@ -37,31 +37,44 @@ export const testDbConnection = async (req: Request, res: Response) => {
     }
 };
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const testGeminiConnection = async (req: Request, res: Response) => {
     try {
-        console.log("Testing Gemini API connection...");
+        console.log("Testing Gemini API connection (REST)...");
         const apiKey = process.env.GEMINI_API_KEY;
 
         if (!apiKey || apiKey.startsWith("YOUR_")) {
             throw new Error("GEMINI_API_KEY is missing or invalid in .env");
         }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        // Updated package, using 1.5-flash (Vision capable)
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const modelName = "gemini-1.5-flash"; // Or gemini-pro
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
-        const prompt = "Please reply with just the word 'ONLINE' if you receive this.";
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        const payload = {
+            contents: [{
+                parts: [{ text: "Please reply with just the word 'ONLINE' if you receive this." }]
+            }]
+        };
+
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(JSON.stringify((data as any).error || data));
+        }
+
+        const text = (data as any).candidates?.[0]?.content?.parts?.[0]?.text || "No text response";
 
         res.json({
             status: 'ok',
-            message: 'Gemini API is working correctly',
+            message: 'Gemini API is working correctly (REST)',
             params: {
-                model: "gemini-1.5-flash",
+                model: modelName,
                 keyConfigured: true,
                 keyPrefix: apiKey.substring(0, 5) + "..."
             },

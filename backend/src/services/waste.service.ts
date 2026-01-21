@@ -3,55 +3,47 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 let genAI: GoogleGenerativeAI | null = null;
 
 export const analyzeWaste = async (imageBase64: string) => {
-    if (!genAI) {
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            console.error("CRITICAL: GEMINI_API_KEY is not defined in environment variables.");
-            throw new Error("AI service configuration missing");
-        }
-        console.log("Initializing AI Service...");
-        genAI = new GoogleGenerativeAI(apiKey);
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        console.error("CRITICAL: GEMINI_API_KEY is not defined in environment variables.");
+        throw new Error("AI service configuration missing");
     }
-    const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash", // Use 1.5-flash for vision capabilities
-        safetySettings: [
-            {
-                category: "HARM_CATEGORY_HARASSMENT" as any,
-                threshold: "BLOCK_NONE" as any,
-            },
-            {
-                category: "HARM_CATEGORY_HATE_SPEECH" as any,
-                threshold: "BLOCK_NONE" as any,
-            },
-            {
-                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT" as any,
-                threshold: "BLOCK_NONE" as any,
-            },
-            {
-                category: "HARM_CATEGORY_DANGEROUS_CONTENT" as any,
-                threshold: "BLOCK_NONE" as any,
-            },
-        ],
-    });
 
-    const prompt = "นี่คือรูปขยะ ช่วยบอกหน่อยว่าเป็นขยะประเภทไหน (ขยะเปียก, รีไซเคิล, ทั่วไป, อันตราย) ตอบแค่ชื่อประเภท";
+    const modelName = "gemini-1.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+    const parts = imageBase64.split(',');
+    const base64Data = parts.length > 1 ? parts[1] : parts[0];
+
+    const payload = {
+        contents: [{
+            parts: [
+                { text: "นี่คือรูปขยะ ช่วยบอกหน่อยว่าเป็นขยะประเภทไหน (ขยะเปียก, รีไซเคิล, ทั่วไป, อันตราย) ตอบแค่ชื่อประเภท" },
+                {
+                    inline_data: {
+                        mime_type: "image/jpeg",
+                        data: base64Data
+                    }
+                }
+            ]
+        }]
+    };
 
     try {
-        const parts = imageBase64.split(',');
-        const base64Data = parts.length > 1 ? parts[1] : parts[0];
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
 
-        const result = await model.generateContent([
-            prompt,
-            {
-                inlineData: {
-                    mimeType: "image/jpeg",
-                    data: base64Data
-                }
-            }
-        ]);
+        const data: any = await response.json();
 
-        const response = await result.response;
-        const text = response.text().trim();
+        if (!response.ok) {
+            console.error("Gemini API Error Response:", JSON.stringify(data));
+            throw new Error(data.error?.message || "Unknown API Error");
+        }
+
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Unknown";
         console.log("Gemini Response:", text);
 
         // Map simple response to the JSON structure expected by Frontend
