@@ -55,8 +55,24 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
         setAnalyzing(true);
         setError(null);
         try {
-            // Strip prefix if needed, though analyzeImage might handle it
-            const base64Data = base64Image.split(',')[1];
+            // Resize Image Logic
+            const img = new Image();
+            img.src = base64Image;
+            await new Promise((resolve) => { img.onload = resolve; });
+
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            const resizedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+            console.log(`📦 [Frontend] Original Size: ${base64Image.length} -> Resized: ${resizedBase64.length}`);
+
+            const base64Data = resizedBase64.split(',')[1];
             const data = await analyzeImage(base64Data);
             setResult(data);
         } catch (err) {
