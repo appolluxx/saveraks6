@@ -29,9 +29,14 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
         return () => clearInterval(interval);
     }, []);
     const capture = async () => {
+        console.log("📸 [Frontend] Capture button clicked!");
         const imageSrc = webcamRef.current?.getScreenshot();
         if (imageSrc) {
+            console.log(`📦 [Frontend] Image captured. Size: ${imageSrc.length} chars (approx ${Math.round(imageSrc.length / 1024)} KB)`);
             processImage(imageSrc);
+        } else {
+            console.error("❌ [Frontend] Webcam returned null screenshot!");
+            setError("Camera Capture Failed - No Image Data");
         }
     };
 
