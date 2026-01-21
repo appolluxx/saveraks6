@@ -35,8 +35,6 @@ export const testDbConnection = async (req: Request, res: Response) => {
             stack: error.stack
         });
     }
-});
-    }
 };
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
