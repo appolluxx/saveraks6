@@ -6,8 +6,10 @@ import { authenticate } from '../utils/auth.middleware.js';
 const router = Router();
 
 // Debug Route
-import { testDbConnection } from '../controllers/debug.controller.js';
+import { testDbConnection, testGeminiConnection } from '../controllers/debug.controller.js';
 router.get('/test-db', testDbConnection);
+router.get('/test-ai', testGeminiConnection);
+
 
 
 // Login

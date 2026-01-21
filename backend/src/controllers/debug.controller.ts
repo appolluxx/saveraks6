@@ -35,4 +35,47 @@ export const testDbConnection = async (req: Request, res: Response) => {
             stack: error.stack
         });
     }
+});
+    }
+};
+
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+export const testGeminiConnection = async (req: Request, res: Response) => {
+    try {
+        console.log("Testing Gemini API connection...");
+        const apiKey = process.env.GEMINI_API_KEY;
+
+        if (!apiKey || apiKey.startsWith("YOUR_")) {
+            throw new Error("GEMINI_API_KEY is missing or invalid in .env");
+        }
+
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const prompt = "Please reply with just the word 'ONLINE' if you receive this.";
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        res.json({
+            status: 'ok',
+            message: 'Gemini API is working correctly',
+            params: {
+                model: "gemini-1.5-flash",
+                keyConfigured: true,
+                keyPrefix: apiKey.substring(0, 5) + "..."
+            },
+            aiResponse: text
+        });
+
+    } catch (error: any) {
+        console.error("Gemini Test Error:", error);
+        res.status(500).json({
+            status: 'error',
+            error: error.message,
+            stack: error.stack,
+            keyConfigured: !!process.env.GEMINI_API_KEY
+        });
+    }
 };
