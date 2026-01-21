@@ -15,6 +15,14 @@ export const analyzeWaste = async (imageBase64: string) => {
     const parts = imageBase64.split(',');
     const base64Data = parts.length > 1 ? parts[1] : parts[0];
 
+    console.log(`[AI Debug] Image received. Total Length: ${imageBase64.length}`);
+    console.log(`[AI Debug] Base64 Data Length: ${base64Data.length}`);
+    console.log(`[AI Debug] Base64 Prefix: ${base64Data.substring(0, 30)}...`);
+
+    if (base64Data.length < 100) {
+        throw new Error("Image data is too small or invalid.");
+    }
+
     const payload = {
         contents: [{
             parts: [
