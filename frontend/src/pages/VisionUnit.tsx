@@ -111,7 +111,14 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
 
             const base64Data = resizedBase64.split(',')[1];
             const data = await analyzeImage(base64Data);
-            setResult(data);
+            console.log("📦 [Frontend] Analysis Data received:", data);
+
+            // Fix: Unwrap the response. Backend returns { success: true, wasteSorting: ... }
+            if (data && data.wasteSorting) {
+                setResult(data.wasteSorting);
+            } else {
+                setResult(data);
+            }
         } catch (err) {
             console.error("Analysis failed", err);
             setError("AI Systems Offline. Manual Override Required.");
