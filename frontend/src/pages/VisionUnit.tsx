@@ -38,25 +38,39 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
             return;
         }
 
-        // Add a small delay/retry mechanism to ensure camera is ready
+        // Force a small delay to ensure video stream is stable
+        // await new Promise(resolve => setTimeout(resolve, 100));
+
         let attempts = 0;
         let imageSrc = null;
 
+        // Try to capture up to 3 times
         while (attempts < 3 && !imageSrc) {
-            imageSrc = webcamRef.current.getScreenshot();
-            if (!imageSrc) {
-                console.log(`⚠️ [Frontend] Capture attempt ${attempts + 1} failed. Retrying...`);
-                await new Promise(resolve => setTimeout(resolve, 300)); // Wait 300ms before retry
+            try {
+                imageSrc = webcamRef.current.getScreenshot();
+                if (!imageSrc) {
+                    console.warn(`⚠️ [Frontend] Attempt ${attempts + 1}: Screenshot returned null. Retrying...`);
+                    await new Promise(resolve => setTimeout(resolve, 300)); // Wait 300ms
+                    attempts++;
+                }
+            } catch (e) {
+                console.error("Capture error:", e);
                 attempts++;
             }
         }
 
         if (imageSrc) {
-            console.log(`📦 [Frontend] Image captured successfully. Size: ${imageSrc.length}`);
-            processImage(imageSrc);
+            console.log(`📦 [Frontend] Image captured successfully. Length: ${imageSrc.length}`);
+            // Verify it's a valid base64 image string
+            if (imageSrc.startsWith('data:image')) {
+                processImage(imageSrc);
+            } else {
+                console.error("❌ [Frontend] Invalid image format captured");
+                setError("Camera Error: Invalid Image Format");
+            }
         } else {
             console.error("❌ [Frontend] Failed to capture image after multiple attempts");
-            setError("Camera Capture Failed - Please try again");
+            setError("Camera Capture Failed. Please try again or check camera permissions.");
         }
     };
 
