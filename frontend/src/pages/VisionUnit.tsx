@@ -256,7 +256,27 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
                             </div>
                             <div className="flex-1">
                                 <span className="text-[10px] font-bold text-neon-green/60 uppercase tracking-widest font-mono">Detected Object</span>
-                                <h2 className="text-2xl font-bold text-white font-display uppercase tracking-wide">{result.label || 'วัตถุที่ตรวจพบ'}</h2>
+                                <h2 className="text-2xl font-bold text-white font-display uppercase tracking-wide">
+                                    {(() => {
+                                        // 1. Try explicit Thai label from AI
+                                        if (result.label && result.label !== 'Main Object Name') return result.label;
+
+                                        // 2. Try English item name and translate
+                                        const engName = result.items?.[0]?.name || '';
+                                        const lowerName = engName.toLowerCase();
+
+                                        if (lowerName.includes('bottle')) return 'ขวดพลาสติก';
+                                        if (lowerName.includes('can')) return 'กระป๋องอลูมิเนียม';
+                                        if (lowerName.includes('snack') || lowerName.includes('bag')) return 'ถุงขนม/พลาสติก';
+                                        if (lowerName.includes('cup')) return 'แก้วน้ำ';
+                                        if (lowerName.includes('straw')) return 'หลอดพลาสติก';
+                                        if (lowerName.includes('paper') || lowerName.includes('box')) return 'กระดาษ/กล่อง';
+                                        if (lowerName.includes('food')) return 'เศษอาหาร/ภาชนะ';
+
+                                        // 3. Radius fallback
+                                        return engName || result.category || 'วัตถุที่ตรวจพบ';
+                                    })()}
+                                </h2>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="text-[10px] font-mono text-neon-blue">
                                         {(
