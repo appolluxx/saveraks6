@@ -12,7 +12,7 @@ import AdminDashboard from './components/AdminDashboard';
 import Profile from './pages/Profile';
 import InstallBanner from './components/InstallBanner';
 import ActionLogger from './components/ActionLogger';
-import { getProfile, initializeDemoData, logout } from './services/api';
+import { getProfile, getProfileFromServer, initializeDemoData, logout } from './services/api';
 import { User } from './types';
 
 const App: React.FC = () => {
@@ -23,9 +23,17 @@ const App: React.FC = () => {
 
   useEffect(() => {
     initializeDemoData();
-    const activeUser = getProfile();
-    if (activeUser) setUser(activeUser);
-    setTimeout(() => setLoading(false), 1200);
+    // Initial load: try server first for freshness, fall back to local
+    const initUser = async () => {
+      const serverUser = await getProfileFromServer();
+      if (serverUser) setUser(serverUser);
+      else {
+        const localUser = getProfile();
+        if (localUser) setUser(localUser);
+      }
+      setLoading(false);
+    };
+    initUser();
   }, []);
 
   const handleLogin = (u: User) => {
@@ -40,8 +48,9 @@ const App: React.FC = () => {
     setCurrentTab('feed');
   };
 
-  const handleRefresh = () => {
-    setUser(getProfile());
+  const handleRefresh = async () => {
+    const updatedUser = await getProfileFromServer();
+    if (updatedUser) setUser(updatedUser);
   };
 
   if (loading) return (
