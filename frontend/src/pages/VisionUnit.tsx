@@ -29,14 +29,34 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
         return () => clearInterval(interval);
     }, []);
     const capture = async () => {
-        console.log("📸 [Frontend] Capture button clicked!");
-        const imageSrc = webcamRef.current?.getScreenshot();
+        console.log("📸 [Frontend] Capture initiated...");
+        setError(null);
+
+        if (!webcamRef.current) {
+            console.error("❌ [Frontend] Webcam ref is null");
+            setError("Camera not initialized");
+            return;
+        }
+
+        // Add a small delay/retry mechanism to ensure camera is ready
+        let attempts = 0;
+        let imageSrc = null;
+
+        while (attempts < 3 && !imageSrc) {
+            imageSrc = webcamRef.current.getScreenshot();
+            if (!imageSrc) {
+                console.log(`⚠️ [Frontend] Capture attempt ${attempts + 1} failed. Retrying...`);
+                await new Promise(resolve => setTimeout(resolve, 300)); // Wait 300ms before retry
+                attempts++;
+            }
+        }
+
         if (imageSrc) {
-            console.log(`📦 [Frontend] Image captured. Size: ${imageSrc.length} chars (approx ${Math.round(imageSrc.length / 1024)} KB)`);
+            console.log(`📦 [Frontend] Image captured successfully. Size: ${imageSrc.length}`);
             processImage(imageSrc);
         } else {
-            console.error("❌ [Frontend] Webcam returned null screenshot!");
-            setError("Camera Capture Failed - No Image Data");
+            console.error("❌ [Frontend] Failed to capture image after multiple attempts");
+            setError("Camera Capture Failed - Please try again");
         }
     };
 

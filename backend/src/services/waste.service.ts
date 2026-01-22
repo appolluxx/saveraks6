@@ -84,7 +84,7 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
         });
 
         console.log("[AI Service] Response received from Google.");
-        const jsonResponse = extractJson(response.text());
+        const jsonResponse = extractJson(response.text);
         console.log("[AI Service] Parsed JSON:", JSON.stringify(jsonResponse).substring(0, 100) + "...");
 
         return jsonResponse;
