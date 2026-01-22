@@ -38,9 +38,9 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
     }
 
     // List of models to try in order of preference: User requested newer preview models
-    // Note: 'gemini-3' might be a typo for 'gemini-2.0-flash-exp' but we include it just in case.
     const modelsToTry = [
-        'gemini-2.0-flash-exp',    // Latest Experimental (Likely what user meant)
+        'gemini-3-flash-preview',  // User specified model
+        'gemini-2.0-flash-exp',    // Latest Experimental
         'gemini-1.5-flash-002',    // New Stable Flash
         'gemini-1.5-flash-8b',     // Efficient Flash
         'gemini-1.5-pro-002',      // New Stable Pro
