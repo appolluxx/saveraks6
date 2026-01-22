@@ -1,10 +1,10 @@
 
 import React, { useState, useRef } from 'react';
 import { Camera, RefreshCcw, Scan, Zap, Box, AlertTriangle, CheckCircle } from 'lucide-react';
-import { analyzeEnvironmentImage, fileToBase64 } from '../services/geminiService';
+import { analyzeEnvironmentImage, fileToBase64 } from '../../services/geminiService';
 // Fix: compressImage moved to utils/image to resolve module export error
 import { logActivity } from '../../services/api';
-import { compressImage } from '../utils/image';
+import { compressImage } from '../../utils/image';
 import { ActionType, ScanResult } from '../../types';
 
 interface EcoScannerProps { onActivityLogged: () => void; }

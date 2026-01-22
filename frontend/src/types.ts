@@ -40,6 +40,8 @@ export interface ScanResult {
     summaryThai?: string;
     isFraud?: boolean;
     reason?: string;
+    category?: string; // Added for EcoScanner compatibility
+    points?: number;   // Added for EcoScanner compatibility
 }
 
 export interface Action {
