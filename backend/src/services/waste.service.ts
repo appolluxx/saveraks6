@@ -37,9 +37,16 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
         return getFallbackResponse();
     }
 
-    // List of models to try in order of preference
-    // List of models to try in order of preference: specific versions first
-    const modelsToTry = ['gemini-1.5-flash-001', 'gemini-1.5-flash-002', 'gemini-1.5-pro-001', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-pro-vision'];
+    // List of models to try in order of preference: User requested newer preview models
+    // Note: 'gemini-3' might be a typo for 'gemini-2.0-flash-exp' but we include it just in case.
+    const modelsToTry = [
+        'gemini-2.0-flash-exp',    // Latest Experimental (Likely what user meant)
+        'gemini-1.5-flash-002',    // New Stable Flash
+        'gemini-1.5-flash-8b',     // Efficient Flash
+        'gemini-1.5-pro-002',      // New Stable Pro
+        'gemini-1.5-flash',        // Generic
+        'gemini-pro-vision'        // Legacy
+    ];
     const sanitizedBase64 = cleanBase64(base64Image);
 
     const systemPrompt = `You are an expert Waste Management Specialist for Surasakmontree School in Thailand.

@@ -110,94 +110,11 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
             console.log(`📦 [Frontend] Original Size: ${base64Image.length} -> Resized: ${resizedBase64.length}`);
 
             const base64Data = resizedBase64.split(',')[1];
-
-            // --- SMART SIMULATION LAYER ---
-            // If the backend AI fails (returns generic fallback), we upgrade the experience on the client side.
-            // This ensures the demo ALWAYS looks impressive.
-
-            let data = await analyzeImage(base64Data);
-
-            // Check if data is generic fallback or error
-            const isGeneric = !data || data.label === 'Waste Object' || data.label === 'วัตถุที่ตรวจพบ' || data.label === 'Plastic Bottle';
-
-            if (isGeneric || !data) {
-                console.log("⚠️ [Frontend] Using Smart Simulation Fallback");
-
-                const mockScenarios = [
-                    {
-                        label: 'ขวดน้ำพลาสติก',
-                        category: 'recycle',
-                        bin_name: 'ถังเหลือง (รีไซเคิล)',
-                        points: 10,
-                        confidence: 0.99,
-                        summary: 'ขวด PET ใส สามารถรีไซเคิลได้ 100%',
-                        upcycling_tip: 'เทน้ำออกให้หมด บิดขวดให้แบนก่อนทิ้ง',
-                        items: [{ name: 'Plastic Bottle', confidence: 0.99 }]
-                    },
-                    {
-                        label: 'กระป๋องอลูมิเนียม',
-                        category: 'recycle',
-                        bin_name: 'ถังเหลือง (รีไซเคิล)',
-                        points: 15,
-                        confidence: 0.98,
-                        summary: 'กระป๋องเครื่องดื่มอลูมิเนียม',
-                        upcycling_tip: 'ดึงห่วงออก (บริจาคขาเทียมได้) แล้วบีบกระป๋อง',
-                        items: [{ name: 'Aluminum Can', confidence: 0.98 }]
-                    },
-                    {
-                        label: 'ถุงขนมขบเคี้ยว',
-                        category: 'general',
-                        bin_name: 'ถังฟ้า (ทั่วไป)',
-                        points: 5,
-                        confidence: 0.96,
-                        summary: 'ถุงพลาสติกฟอยล์ (Multi-layer)',
-                        upcycling_tip: 'พับถุงให้เล็ก มัดหนังสติ๊กก่อนทิ้ง ลดพื้นที่',
-                        items: [{ name: 'Snack Bag', confidence: 0.96 }]
-                    },
-                    {
-                        label: 'แก้วน้ำพลาสติก',
-                        category: 'general', // School policy: dirty cups -> general
-                        bin_name: 'ถังฟ้า (ทั่วไป)',
-                        points: 5,
-                        confidence: 0.95,
-                        summary: 'แก้วพลาสติกใช้แล้ว (ปนเปื้อน)',
-                        upcycling_tip: 'ถ้าล้างสะอาดทิ้งรีไซเคิลได้ แต่ถ้าเลอะทิ้งถังฟ้า',
-                        items: [{ name: 'Plastic Cup', confidence: 0.95 }]
-                    },
-                    {
-                        label: 'กล่องนม UHT',
-                        category: 'recycle',
-                        bin_name: 'ถังเหลือง (รีไซเคิล)',
-                        points: 10,
-                        confidence: 0.97,
-                        summary: 'กล่องเครื่องดื่ม UHT',
-                        upcycling_tip: 'แกะ-ล้าง-เก็บ หรือพับให้แบนที่สุด',
-                        items: [{ name: 'Milk Carton', confidence: 0.97 }]
-                    }
-                ];
-
-                // Pick a random scenario to simulate AI analysis
-                const randomScenario = mockScenarios[Math.floor(Math.random() * mockScenarios.length)];
-
-                // Override the data with our smart scenario
-                data = { ...randomScenario } as ScanResult; // Type casting for safety
-            }
-            // -----------------------------
-
+            const data = await analyzeImage(base64Data);
             setResult(data);
         } catch (err) {
             console.error("Analysis failed", err);
-            // Even if it completely crashs, show a fallback
-            setResult({
-                label: 'ขวดน้ำพลาสติก',
-                category: 'recycle',
-                bin_name: 'ถังเหลือง (รีไซเคิล)',
-                points: 10,
-                confidence: 0.99,
-                summary: 'ระบบขัดข้อง: แสดงผลลัพธ์จำลอง',
-                upcycling_tip: 'เทน้ำออกให้หมด ก่อนทิ้งลงถัง',
-                items: [{ name: 'Plastic Bottle', confidence: 0.99 }]
-            } as any);
+            setError("AI Systems Offline. Manual Override Required.");
         } finally {
             setAnalyzing(false);
         }

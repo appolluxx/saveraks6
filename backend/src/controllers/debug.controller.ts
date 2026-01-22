@@ -48,39 +48,40 @@ export const testGeminiConnection = async (req: Request, res: Response) => {
             throw new Error("GEMINI_API_KEY is missing or invalid in .env");
         }
 
-        // Changed to GET models list to debug model names availability
+        // 1. LIST MODELS
         const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-
-        const response = await fetch(url, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" }
-        });
-
+        const response = await fetch(url, { headers: { "Content-Type": "application/json" } });
         const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(JSON.stringify((data as any).error || data));
-        }
+        if (!response.ok) throw new Error(JSON.stringify((data as any).error || data));
+
+        const models = (data as any).models || [];
+        const availableModels = models.map((m: any) => m.name.replace('models/', ''));
+
+        // 2. TEST GENERATION (with first valid model)
+        const targetModel = availableModels.find((m: string) => m.includes('flash') || m.includes('pro')) || 'gemini-1.5-flash';
+
+        console.log(`Attempting test generation with: ${targetModel}`);
+        const genUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
+
+        const genRes = await fetch(genUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: "Ping" }] }] })
+        });
+        const genData = await genRes.json();
 
         res.json({
             status: 'ok',
-            message: 'Gemini API Connected - Listing Available Models',
-            availableModels: (data as any).models?.filter((m: any) =>
-                m.name.includes('gemini') || m.name.includes('vision')
-            ).map((m: any) => ({
-                name: m.name,
-                supportedGenerationMethods: m.supportedGenerationMethods
-            })) || [],
-            keyPrefix: apiKey.substring(0, 5) + "..."
+            message: 'Gemini Verification Complete',
+            models: availableModels,
+            testTarget: targetModel,
+            generationResult: genRes.ok ? 'SUCCESS' : 'FAILED',
+            generationError: genRes.ok ? null : genData
         });
 
     } catch (error: any) {
         console.error("Gemini Test Error:", error);
-        res.status(500).json({
-            status: 'error',
-            error: error.message,
-            stack: error.stack,
-            keyConfigured: !!process.env.GEMINI_API_KEY
-        });
+        res.status(500).json({ status: 'error', error: error.message, stack: error.stack });
     }
 };
