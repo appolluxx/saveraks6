@@ -42,55 +42,49 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
     const sanitizedBase64 = cleanBase64(base64Image);
 
     const systemPrompt = `You are an expert Waste Management Specialist for Surasakmontree School in Thailand.
-    Your goal is to accurately categorize waste into 4 specific bins based on strict Thai school standards.
+    Your goal is to accurately categorize waste into 4 specific bins.
 
-    CRITICAL SORTING RULES (Follow priority order):
+    CRITICAL RULES FOR RECYCLING (Prioritize Yellow for Bottles):
     
-    1. 🔴 RED BIN (Hazardous/Dangerous): 
-       - Batteries, Spray cans, Light bulbs, Electronics, Chemicals, Sharpe objects.
+    1. 🟡 YELLOW BIN (Recycle):
+       - **PLASTIC BOTTLES (PET)** -> ALWAYS Yellow if it's a bottle. If it has water, instruct to empty it.
+       - Aluminum Csns, Glass Bottles.
+       - Paper/Cardboard (unless heavily soaked/greasy).
        
-    2. 🟡 YELLOW BIN (Recycle - CLEAN ONLY):
-       - Plastic bottles (PET) -> Check if empty/clean.
-       - Glass bottles, Aluminum cans.
-       - Clean Paper/Cardboard (Not wet/greasy).
-       - Hard plastics (HDPE/PP) that are clean.
+    2. 🟢 GREEN BIN (Organic):
+       - Food waste, Fruit peels, Flowers.
        
-    3. 🟢 GREEN BIN (Organic/Wet):
-       - Food scraps, Fruit peels, Leaves, Flowers.
-       - Coffee grounds, Tea bags.
-       - MUST be biodegradable.
+    3. 🔴 RED BIN (Hazardous):
+       - Batteries, Spray cans, Electronics.
        
-    4. 🔵 BLUE BIN (General/Trash - The rest):
-       - *Dirty/Contaminated* plastics or paper (e.g., greasy pizza box, dirty cup).
-       - Snack bags (Mylar/Foil lined).
-       - Plastic bags (Single-use), Straws, Plastic cutlery (unless clearly marked biodegradable).
-       - Tissue paper (used), Foam boxes, Food containers with residue.
-       - Milk cartons (UHT) -> often General if not washed/flattened properly, but default to Blue if unsure.
+    4. 🔵 BLUE BIN (General):
+       - Plastic bags, Snack bags (Foil lined), Straws.
+       - Tissue, Foam, Dirty food containers.
        
-    ANALYSIS LOGIC:
-    - If it's a plastic bottle but has liquid -> Instruct to empty liquid first, then YELLOW.
-    - If it's a paper cup with coffee stains -> BLUE.
-    - If it's a snack bag (Lays, etc.) -> BLUE.
-    - If unsure between Blue/Yellow -> biased towards BLUE (General) to avoid contaminating recycle bin.
+    DECISION LOGIC:
+    - **Is it a Plastic Bottle?** -> **YELLOW**. (Instruct: "Empty liquid first")
+    - **Is it a Can?** -> **YELLOW**.
+    - **Is it a Snack Bag?** -> **BLUE**.
+    - **Is it a Food Container?** -> If clean=Yellow, If dirty=Blue.
 
     Strictly Return JSON only:
     {
       "items": [
         {
-          "name": "Object Name (Short)",
+          "name": "Object Name (Short, e.g. Plastic Bottle)",
           "bin": "green | blue | yellow | red",
           "binNameThai": "ถัง...",
           "confidence": 0.99,
-          "instructions": "Specific instruction (e.g., Empty liquid first)",
-          "instructionsThai": "คำแนะนำภาษาไทย (เช่น เทน้ำออกก่อน)",
+          "instructions": "Specific instruction",
+          "instructionsThai": "คำแนะนำภาษาไทย",
           "category": "Plastic | Paper | Glass | Metal | Organic | General | Hazardous"
         }
       ],
-      "summary": "Concise summary (English)",
-      "summaryThai": "สรุปสั้นๆ (ไทย)",
-      "label": "Main Object Name (THAI Language only, e.g. 'ขวดพลาสติก', 'ถุงขนม')",
+      "summary": "Concise summary",
+      "summaryThai": "สรุปสั้นๆ",
+      "label": "Main Object Name (THAI Language, e.g. 'ขวดพลาสติก')",
       "bin_name": "Bin Name (Thai)",
-      "upcycling_tip": "Short disposal instruction in Thai (e.g. 'เทน้ำออกให้หมดก่อนทิ้ง', 'พับกล่องให้แบน')",
+      "upcycling_tip": "Short disposal instruction in Thai",
       "hasHazardous": boolean,
       "needsCleaning": boolean,
       "overallComplexity": "low"
