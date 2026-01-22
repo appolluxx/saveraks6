@@ -137,7 +137,7 @@ const EcoScanner: React.FC<EcoScannerProps> = ({ onActivityLogged }) => {
 
         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleCapture} />
       </div>
-    // Spacer for bottom nav
+      {/* Spacer for bottom nav */}
       <div className="h-24"></div>
 
     </>

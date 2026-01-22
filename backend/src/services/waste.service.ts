@@ -37,10 +37,8 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
         return getFallbackResponse();
     }
 
-    // Use gemini-1.5-flash for production/demo (Real AI)
-    const model = 'gemini-1.5-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
+    // List of models to try in order of preference
+    const modelsToTry = ['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-pro-vision'];
     const sanitizedBase64 = cleanBase64(base64Image);
 
     const systemPrompt = `You are a Waste Management Specialist for Surasakmontree School.
@@ -91,48 +89,49 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
         }
     };
 
-    try {
-        console.log(`[AI Service] Sending fetch request to ${url}`);
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        const data: any = await response.json();
-
-        if (!response.ok) {
-            console.error("Gemini API Error Body:", JSON.stringify(data));
-            // Trigger Fallback
-            return getFallbackResponse();
-        }
-
-        console.log("[AI Service] Response OK. Parsing content...");
-
-        // Extract text from response structure
-        const candidate = data.candidates?.[0];
-        const textResponse = candidate?.content?.parts?.[0]?.text;
-
-        if (!textResponse) {
-            console.error("No content text returned from AI");
-            return getFallbackResponse();
-        }
-
-        // Clean any markdown code blocks if the API adds them despite mimetype
-        const cleanJson = textResponse.replace(/^```json\s*/, "").replace(/\s*```$/, "");
-
+    // Try each model until one works
+    for (const model of modelsToTry) {
         try {
-            const parsedAnalysis = JSON.parse(cleanJson);
-            console.log("[AI Service] Analysis success:", JSON.stringify(parsedAnalysis).substring(0, 100) + "...");
-            return parsedAnalysis;
-        } catch (parseError) {
-            console.error("Failed to parse AI JSON response", parseError);
-            return getFallbackResponse();
-        }
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            console.log(`[AI Service] Attempting analysis with model: ${model}`);
 
-    } catch (error: any) {
-        console.error("AI Analysis Failed (Exception):", error);
-        // Fallback on any exception
-        return getFallbackResponse();
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data: any = await response.json();
+
+            if (!response.ok) {
+                console.warn(`[AI Service] Model ${model} failed: ${data?.error?.message || response.statusText}`);
+                continue; // Try next model
+            }
+
+            console.log(`[AI Service] Success with model: ${model}`);
+
+            const candidate = data.candidates?.[0];
+            const textResponse = candidate?.content?.parts?.[0]?.text;
+
+            if (!textResponse) {
+                throw new Error("No content text returned from AI");
+            }
+
+            const cleanJson = textResponse.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+            try {
+                return JSON.parse(cleanJson);
+            } catch (e) {
+                console.error(`[AI Service] JSON Parse error for ${model}:`, e);
+                continue; // Try next model if JSON is bad
+            }
+
+        } catch (error) {
+            console.error(`[AI Service] Exception with model ${model}:`, error);
+            // Continue to next model
+        }
     }
+
+    // If all models fail
+    console.error("[AI Service] All AI models failed. Using Fallback.");
+    return getFallbackResponse();
 };
