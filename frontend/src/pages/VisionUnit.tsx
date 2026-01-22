@@ -259,7 +259,7 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
                                 <h2 className="text-2xl font-bold text-white font-display uppercase tracking-wide">
                                     {(() => {
                                         // 1. Try explicit Thai label from AI
-                                        if (result.label && result.label !== 'Main Object Name') return result.label;
+                                        if (result.label && result.label !== 'Main Object Name' && result.label !== 'Unknown') return result.label;
 
                                         // 2. Try English item name and translate
                                         const engName = result.items?.[0]?.name || '';
@@ -270,13 +270,28 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
                                         if (lowerName.includes('snack') || lowerName.includes('bag')) return 'ถุงขนม/พลาสติก';
                                         if (lowerName.includes('cup')) return 'แก้วน้ำ';
                                         if (lowerName.includes('straw')) return 'หลอดพลาสติก';
-                                        if (lowerName.includes('paper') || lowerName.includes('box')) return 'กระดาษ/กล่อง';
-                                        if (lowerName.includes('food')) return 'เศษอาหาร/ภาชนะ';
+                                        if (lowerName.includes('paper') || lowerName.includes('box') || lowerName.includes('carton')) return 'กระดาษ/กล่อง';
+                                        if (lowerName.includes('food') || lowerName.includes('organic')) return 'เศษอาหาร/เปลือกผลไม้';
+                                        if (lowerName.includes('glass')) return 'ขวดแก้ว';
+                                        if (lowerName.includes('battery') || lowerName.includes('spray')) return 'ขยะอันตราย';
 
-                                        // 3. Radius fallback
+                                        // 3. Fallback
                                         return engName || result.category || 'วัตถุที่ตรวจพบ';
                                     })()}
                                 </h2>
+                                {/* Confidence Bar */}
+                                <div className="mt-2 w-full max-w-[200px]">
+                                    <div className="flex justify-between text-[10px] text-zinc-500 mb-1 font-mono">
+                                        <span>CONFIDENCE</span>
+                                        <span className="text-neon-green">{Math.round((result.items?.[0]?.confidence || 0.95) * 100)}%</span>
+                                    </div>
+                                    <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-neon-green shadow-[0_0_5px_rgba(0,233,120,0.5)]"
+                                            style={{ width: `${(result.items?.[0]?.confidence || 0.95) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="text-[10px] font-mono text-neon-blue">
                                         {(
@@ -313,7 +328,7 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 
