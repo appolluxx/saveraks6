@@ -109,7 +109,14 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
         }],
         generationConfig: {
             response_mime_type: "application/json"
-        }
+        },
+        // CRITICAL SPEED FIX: Disable safety filters to prevent "No content text" errors on trash images
+        safetySettings: [
+            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+        ]
     };
 
     // Try each model until one works
