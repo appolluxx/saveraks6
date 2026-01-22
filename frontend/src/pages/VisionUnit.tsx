@@ -15,6 +15,7 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
     const [error, setError] = useState<string | null>(null);
     const [camActive, setCamActive] = useState(false);
     const [uploadMode, setUploadMode] = useState(false);
+    const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Animation states
@@ -63,6 +64,7 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
             console.log(`📦 [Frontend] Image captured successfully. Length: ${imageSrc.length}`);
             // Verify it's a valid base64 image string
             if (imageSrc.startsWith('data:image')) {
+                setCapturedImage(imageSrc);
                 processImage(imageSrc);
             } else {
                 console.error("❌ [Frontend] Invalid image format captured");
@@ -79,6 +81,7 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
+                setCapturedImage(reader.result as string);
                 processImage(reader.result as string);
             };
             reader.readAsDataURL(file);
@@ -237,13 +240,23 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
                     </div>
                 ) : (
                     <div className="animate-in slide-in-from-bottom-10 space-y-6">
+
+                        {/* 📸 Captured Image Preview */}
+                        <div className="relative w-full h-48 rounded-2xl overflow-hidden border border-neon-green/30 shadow-[0_0_20px_rgba(0,233,120,0.1)]">
+                            <img src={capturedImage || ''} alt="Analyzed Waste" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                            <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] text-neon-green font-mono border border-neon-green/30">
+                                IMG_CAPTURE_001.JPG
+                            </div>
+                        </div>
+
                         <div className="flex items-start gap-4">
                             <div className="w-16 h-16 bg-neon-green/10 border border-neon-green/30 rounded-lg flex items-center justify-center text-neon-green shadow-[0_0_15px_rgba(0,233,120,0.2)]">
                                 <Zap size={32} />
                             </div>
                             <div className="flex-1">
                                 <span className="text-[10px] font-bold text-neon-green/60 uppercase tracking-widest font-mono">Detected Object</span>
-                                <h2 className="text-2xl font-bold text-white font-display uppercase tracking-wide">{result.label}</h2>
+                                <h2 className="text-2xl font-bold text-white font-display uppercase tracking-wide">{result.label || 'วัตถุที่ตรวจพบ'}</h2>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="text-[10px] font-mono text-neon-blue">
                                         {(
