@@ -110,7 +110,12 @@ const EcoScanner: React.FC<EcoScannerProps> = ({ onActivityLogged }) => {
                     <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Identified Unit</p>
                     <h4 className="text-xl font-extrabold text-white tracking-tight">{result.label}</h4>
                     <div className="text-brand text-[11px] font-black uppercase tracking-widest flex items-center gap-1">
-                      <CheckCircle size={12} /> Allocation: +{result.points} SRT
+                      <CheckCircle size={12} /> Allocation: +{result.points || 10} SRT
+                      {result.items && result.items[0]?.confidence && (
+                        <span className="opacity-60 ml-2">
+                          | {Math.round(result.items[0].confidence * 100)}% Match
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

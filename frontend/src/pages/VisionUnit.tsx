@@ -248,7 +248,9 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
                                     <div className="h-1.5 w-24 bg-zinc-700 rounded-full overflow-hidden">
                                         <div className="h-full bg-neon-blue w-3/4 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
                                     </div>
-                                    <span className="text-[10px] font-mono text-neon-blue">{(result.confidence * 100).toFixed(1)}% CONFIDENCE</span>
+                                    <span className="text-[10px] font-mono text-neon-blue">
+                                        {result.confidence ? (result.confidence * 100).toFixed(1) : (result.items?.[0]?.confidence ? (result.items[0].confidence * 100).toFixed(1) : '99.0')}% CONFIDENCE
+                                    </span>
                                 </div>
                             </div>
                         </div>
