@@ -149,7 +149,16 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
 
             const cleanJson = textResponse.replace(/^```json\s*/, "").replace(/\s*```$/, "");
             try {
-                return JSON.parse(cleanJson);
+                const parsedResult = JSON.parse(cleanJson);
+
+                // LOG THE RESULT FOR DEBUGGING
+                console.log("------------------------------------------------");
+                console.log(`[AI RESULT] Label: ${parsedResult.label}`);
+                console.log(`[AI RESULT] Item: ${parsedResult.items?.[0]?.name}`);
+                console.log(`[AI RESULT] Bin: ${parsedResult.items?.[0]?.bin} (${parsedResult.items?.[0]?.confidence})`);
+                console.log("------------------------------------------------");
+
+                return parsedResult;
             } catch (e) {
                 console.error(`[AI Service] JSON Parse error for ${model}:`, e);
                 continue; // Try next model if JSON is bad
