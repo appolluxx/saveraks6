@@ -38,7 +38,8 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
     }
 
     // List of models to try in order of preference
-    const modelsToTry = ['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-pro-vision'];
+    // List of models to try in order of preference: specific versions first
+    const modelsToTry = ['gemini-1.5-flash-001', 'gemini-1.5-flash-002', 'gemini-1.5-pro-001', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-pro-vision'];
     const sanitizedBase64 = cleanBase64(base64Image);
 
     const systemPrompt = `You are an expert Waste Management Specialist for Surasakmontree School in Thailand.
