@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, ChevronRight, X, Check, CreditCard, Sparkles } from 'lucide-react';
+import { ChevronRight, X, Check, CreditCard, Sparkles } from 'lucide-react';
 import type { User, Reward } from '../../types';
 import { REWARDS } from '../../../../constants';
 import { useTranslation } from 'react-i18next';
@@ -9,16 +9,27 @@ interface MarketplaceProps {
   onRedeem: (points: number) => void;
 }
 
+import { redeemItem } from '../../services/api';
+
 const Marketplace: React.FC<MarketplaceProps> = ({ user, onRedeem }) => {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<Reward | null>(null);
   const [ticketCode, setTicketCode] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleRedeem = () => {
+  const handleRedeem = async () => {
     if (!selected) return;
-    const code = "UNIT-" + Math.random().toString(36).substr(2, 6).toUpperCase();
-    onRedeem(selected.cost);
-    setTicketCode(code);
+    setLoading(true);
+    try {
+      await redeemItem(selected.id, selected.cost, selected.title);
+      onRedeem(selected.cost); // Update local balance
+      const code = "SRT-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+      setTicketCode(code);
+    } catch (error: any) {
+      alert(error.message || "Redemption failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -85,14 +96,14 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, onRedeem }) => {
                 </div>
 
                 <button
-                  disabled={user.totalSRT < selected.cost}
+                  disabled={user.totalSRT < selected.cost || loading}
                   onClick={handleRedeem}
                   className={`w-full py-5 rounded-inner font-bold uppercase text-xs tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 ${user.totalSRT < selected.cost
                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                    : 'bg-emerald-500 text-white shadow-lg hover:bg-emerald-600'
+                    : loading ? 'bg-emerald-400 cursor-wait' : 'bg-emerald-500 text-white shadow-lg hover:bg-emerald-600'
                     }`}
                 >
-                  {user.totalSRT < selected.cost ? 'Insufficient Units' : t('market.authorize')}
+                  {loading ? 'Purchasing...' : (user.totalSRT < selected.cost ? 'Insufficient Units' : t('market.authorize'))}
                 </button>
               </div>
             ) : (

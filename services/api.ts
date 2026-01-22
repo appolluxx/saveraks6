@@ -243,6 +243,22 @@ export const logActivity = async (type: ActionType, details: any) => {
   });
 };
 
+// Marketplace Redemption
+export const redeemItem = async (itemId: string, cost: number, itemName: string) => {
+  const res = await fetch(getFullUrl('/marketplace/purchase'), {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ itemId, cost, itemName })
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || 'Redemption failed');
+  }
+
+  return await res.json();
+};
+
 export const getSchoolStats = async (): Promise<SchoolStats> => {
   try {
     const res = await fetch(getFullUrl('/stats'), { headers: getHeaders() });
