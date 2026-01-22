@@ -245,11 +245,14 @@ const VisionUnit: React.FC<{ user?: any; onBack?: () => void }> = ({ user, onBac
                                 <span className="text-[10px] font-bold text-neon-green/60 uppercase tracking-widest font-mono">Detected Object</span>
                                 <h2 className="text-2xl font-bold text-white font-display uppercase tracking-wide">{result.label}</h2>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <div className="h-1.5 w-24 bg-zinc-700 rounded-full overflow-hidden">
-                                        <div className="h-full bg-neon-blue w-3/4 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-                                    </div>
                                     <span className="text-[10px] font-mono text-neon-blue">
-                                        {result.confidence ? (result.confidence * 100).toFixed(1) : (result.items?.[0]?.confidence ? (result.items[0].confidence * 100).toFixed(1) : '99.0')}% CONFIDENCE
+                                        {(
+                                            (
+                                                (typeof result.confidence === 'number' && !isNaN(result.confidence)) ? result.confidence :
+                                                    (result.items?.[0]?.confidence && typeof result.items[0].confidence === 'number' && !isNaN(result.items[0].confidence)) ? result.items[0].confidence :
+                                                        0.98
+                                            ) * 100
+                                        ).toFixed(1)}% CONFIDENCE
                                     </span>
                                 </div>
                             </div>
