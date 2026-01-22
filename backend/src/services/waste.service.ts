@@ -1,97 +1,97 @@
-import { GoogleGenAI } from "@google/genai";
-
-// Initialize the Google GenAI client
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-/**
- * Sanitizes base64 strings to ensure they are raw bytes for the API.
- */
 const cleanBase64 = (base64: string): string => {
     return base64.includes(',') ? base64.split(',')[1] : base64;
 };
 
-const extractJson = (text: string | undefined): any => {
-    if (!text) return {};
-    try {
-        const cleanText = text.replace(/```json\n?|```/g, "").trim();
-        return JSON.parse(cleanText);
-    } catch (error) {
-        console.error("AI JSON Parse Error:", text);
-        return {};
-    }
-};
-
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
-    console.log(`[AI Service] Starting analysis. Image size: ${base64Image.length}`);
-    if (!process.env.GEMINI_API_KEY) {
-        throw new Error("GEMINI_API_KEY missing");
+    console.log(`[AI Service] Starting analysis via REST API. Image Payload Length: ${base64Image.length}`);
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        console.error("CRITICAL: GEMINI_API_KEY is not defined.");
+        throw new Error("AI service configuration missing");
     }
 
-    try {
-        // We use gemini-1.5-flash as it is confirmed to be in your available models list
-        // and supports vision tasks well.
-        const model = 'gemini-1.5-flash';
-        const sanitizedBase64 = cleanBase64(base64Image);
+    // Use gemini-1.5-flash as it is reliable and fast
+    const model = 'gemini-1.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-        const systemInstruction = `You are a Waste Management Specialist for Surasakmontree School (SaveRak Project).
-    Analyze the uploaded waste image and provide specific sorting instructions.
-    
-    Thailand Sorting Standards:
-    - GREEN (ถังเขียว): Wet/Organic Waste (ขยะเปียก/อินทรีย์) -> Food scraps, leaves (bin: "green")
-    - BLUE (ถังฟ้า): General Waste (ขยะทั่วไป) -> Snack bags, foam, dirty plastic (bin: "blue")
-    - YELLOW (ถังเหลือง): Recyclable Waste (ขยะรีไซเคิล) -> Clean bottles, cans, paper (bin: "yellow")
-    - RED (ถังแดง): Hazardous Waste (ขยะอันตราย) -> Batteries, spray cans, electronics (bin: "red")
+    const sanitizedBase64 = cleanBase64(base64Image);
 
-    IMPORTANT: Return ONLY valid JSON with this structure:
+    const systemPrompt = `You are a Waste Management Specialist. Analyze the image and output valid JSON only.
+    Strictly follow this JSON structure:
     {
       "items": [
         {
-          "name": "Object name (English)",
-          "bin": "green | blue | yellow | red",
-          "binNameThai": "ถัง... (Thai)",
-          "confidence": 0.95,
-          "instructions": "Instruction (English)",
-          "instructionsThai": "คำแนะนำ (Thai)",
-          "category": "Material type"
+          "name": "Object Name",
+          "bin": "green (wet/organic) | blue (general) | yellow (recycle) | red (hazardous)",
+          "binNameThai": "ถัง...",
+          "confidence": 0.99,
+          "instructions": "English instructions",
+          "instructionsThai": "คำแนะนำภาษาไทย",
+          "category": "Category Name"
         }
       ],
-      "summary": "Short summary (English)",
-      "summaryThai": "สรุปสั้นๆ (Thai)",
-      "label": "Main object name",
-      "bin_name": "Bin Name (Thai)",
-      "hasHazardous": boolean,
-      "needsCleaning": boolean,
-      "overallComplexity": "low | medium | high"
+      "summary": "Summary",
+      "summaryThai": "สรุป",
+      "label": "Main Label",
+      "bin_name": "Bin Name",
+      "hasHazardous": false,
+      "needsCleaning": false,
+      "overallComplexity": "low"
     }`;
 
-        console.log(`[AI Service] Sending request to model: ${model}`);
-
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: [
+    const payload = {
+        contents: [{
+            parts: [
+                { text: systemPrompt },
                 {
-                    role: "user",
-                    parts: [
-                        { text: "Analyze this waste image and tell me which bin it belongs to." },
-                        { inlineData: { mimeType: 'image/jpeg', data: sanitizedBase64 } }
-                    ]
+                    inline_data: {
+                        mime_type: "image/jpeg",
+                        data: sanitizedBase64
+                    }
                 }
-            ],
-            config: {
-                systemInstruction: systemInstruction,
-                responseMimeType: "application/json",
-            }
+            ]
+        }],
+        generationConfig: {
+            response_mime_type: "application/json"
+        }
+    };
+
+    try {
+        console.log(`[AI Service] Sending fetch request to ${url}`);
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
         });
 
-        console.log("[AI Service] Response received from Google.");
-        const jsonResponse = extractJson(response.text);
-        console.log("[AI Service] Parsed JSON:", JSON.stringify(jsonResponse).substring(0, 100) + "...");
+        const data: any = await response.json();
 
-        return jsonResponse;
+        if (!response.ok) {
+            console.error("Gemini API Error Body:", JSON.stringify(data));
+            throw new Error(data.error?.message || `API Error: ${response.status} ${response.statusText}`);
+        }
+
+        console.log("[AI Service] Response OK. Parsing content...");
+
+        // Extract text from response structure
+        const candidate = data.candidates?.[0];
+        const textResponse = candidate?.content?.parts?.[0]?.text;
+
+        if (!textResponse) {
+            throw new Error("No content text returned from AI");
+        }
+
+        // Clean any markdown code blocks if the API adds them despite mimetype
+        const cleanJson = textResponse.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+
+        const parsedAnalysis = JSON.parse(cleanJson);
+        console.log("[AI Service] Analysis success:", JSON.stringify(parsedAnalysis).substring(0, 100) + "...");
+
+        return parsedAnalysis;
 
     } catch (error: any) {
-        console.error("Gemini Vision Error:", error);
-        // Return a fallback error object instead of crashing completely if possible
+        console.error("AI Analysis Failed:", error);
         throw new Error(`AI Analysis Failed: ${error.message}`);
     }
 };
