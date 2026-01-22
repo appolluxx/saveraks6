@@ -88,8 +88,9 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
       ],
       "summary": "Concise summary (English)",
       "summaryThai": "สรุปสั้นๆ (ไทย)",
-      "label": "Main Object Name",
+      "label": "Main Object Name (THAI Language only, e.g. 'ขวดพลาสติก', 'ถุงขนม')",
       "bin_name": "Bin Name (Thai)",
+      "upcycling_tip": "Short disposal instruction in Thai (e.g. 'เทน้ำออกให้หมดก่อนทิ้ง', 'พับกล่องให้แบน')",
       "hasHazardous": boolean,
       "needsCleaning": boolean,
       "overallComplexity": "low"
