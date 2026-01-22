@@ -37,7 +37,7 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
         return getFallbackResponse();
     }
 
-    // Use gemini-1.5-flash as it is reliable and fast standard model
+    // Use gemini-1.5-flash for production/demo (Real AI)
     const model = 'gemini-1.5-flash';
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
