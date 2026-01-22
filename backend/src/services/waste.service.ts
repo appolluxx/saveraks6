@@ -37,15 +37,11 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
         return getFallbackResponse();
     }
 
-    // List of models to try in order of preference: User requested newer preview models
+    // List of models to try in order of preference: Optimized for speed
     const modelsToTry = [
-        'gemini-3-flash-preview',  // User specified model
+        'gemini-3-flash-preview',  // User requested
         'gemini-2.0-flash-exp',    // Latest Experimental
-        'gemini-1.5-flash-002',    // New Stable Flash
-        'gemini-1.5-flash-8b',     // Efficient Flash
-        'gemini-1.5-pro-002',      // New Stable Pro
-        'gemini-1.5-flash',        // Generic
-        'gemini-pro-vision'        // Legacy
+        'gemini-1.5-flash'         // Standard fast model
     ];
     const sanitizedBase64 = cleanBase64(base64Image);
 
