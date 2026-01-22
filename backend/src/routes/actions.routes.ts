@@ -130,9 +130,12 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
 // Analyze waste image
 router.post('/analyze', async (req, res) => {
     try {
-        const { imageBase64 } = req.body;
-        if (!imageBase64) return res.status(400).json({ success: false, error: 'Image required' });
-        const analysis = await analyzeWaste(imageBase64);
+        // Check for both keys to support legacy and new implementations
+        const { imageBase64, image } = req.body;
+        const payload = imageBase64 || image;
+
+        if (!payload) return res.status(400).json({ success: false, error: 'Image required' });
+        const analysis = await analyzeWaste(payload);
         res.json({ success: true, wasteSorting: analysis });
     } catch (error: any) {
         res.status(500).json({ success: false, error: error.message });
