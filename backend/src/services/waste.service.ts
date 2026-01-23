@@ -37,12 +37,10 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
         return getFallbackResponse();
     }
 
-    // List of models to try. Reverted to standard stable versions compatible with v1beta free tier.
+    // List of models to try.
+    // 'gemini-pro-vision' is the legacy "Old" model that often works when others fail.
     const modelsToTry = [
-        'gemini-1.5-flash',       // Standard Alias
-        'gemini-1.5-flash-latest', // Rolling release
-        'gemini-1.5-flash-001',    // Specific version
-        'gemini-2.0-flash-exp'     // Experimental 2.0 (if available)
+        'gemini-3-flash-preview',
     ];
     const sanitizedBase64 = cleanBase64(base64Image);
 
