@@ -16,13 +16,26 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, onRedeem }) => {
   const [selected, setSelected] = useState<Reward | null>(null);
   const [ticketCode, setTicketCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [visualBalance, setVisualBalance] = useState(user.totalSRT);
+
+  // Sync with prop when it updates (e.g. after refresh completes)
+  React.useEffect(() => {
+    setVisualBalance(user.totalSRT);
+  }, [user.totalSRT]);
 
   const handleRedeem = async () => {
     if (!selected) return;
     setLoading(true);
     try {
-      await redeemItem(selected.id, selected.cost, selected.title);
-      onRedeem(selected.cost); // Update local balance
+      const res = await redeemItem(selected.id, selected.cost, selected.title);
+
+      // Update local visual immediately
+      const cost = selected.cost;
+      const newBalance = (res && typeof res.remainingPoints === 'number') ? res.remainingPoints : (visualBalance - cost);
+
+      setVisualBalance(newBalance);
+      onRedeem(cost); // Notify parent to refresh
+
       const code = "SRT-" + Math.random().toString(36).substr(2, 6).toUpperCase();
       setTicketCode(code);
     } catch (error: any) {
@@ -92,18 +105,18 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, onRedeem }) => {
 
                 <div className="bg-slate-50 p-5 rounded-inner border border-slate-200 flex flex-col gap-1">
                   <span className="text-[9px] font-bold uppercase text-slate-500 tracking-widest font-mono">{t('market.balance')}</span>
-                  <span className="text-2xl font-black font-mono text-slate-800 tracking-tighter">{user.totalSRT.toLocaleString()} SRT</span>
+                  <span className="text-2xl font-black font-mono text-slate-800 tracking-tighter">{visualBalance.toLocaleString()} SRT</span>
                 </div>
 
                 <button
-                  disabled={user.totalSRT < selected.cost || loading}
+                  disabled={visualBalance < selected.cost || loading}
                   onClick={handleRedeem}
-                  className={`w-full py-5 rounded-inner font-bold uppercase text-xs tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 ${user.totalSRT < selected.cost
+                  className={`w-full py-5 rounded-inner font-bold uppercase text-xs tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 ${visualBalance < selected.cost
                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                     : loading ? 'bg-emerald-400 cursor-wait' : 'bg-emerald-500 text-white shadow-lg hover:bg-emerald-600'
                     }`}
                 >
-                  {loading ? 'Purchasing...' : (user.totalSRT < selected.cost ? 'Insufficient Units' : t('market.authorize'))}
+                  {loading ? 'Purchasing...' : (visualBalance < selected.cost ? 'Insufficient Units' : t('market.authorize'))}
                 </button>
               </div>
             ) : (

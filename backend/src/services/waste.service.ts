@@ -37,12 +37,11 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
         return getFallbackResponse();
     }
 
-    // List of models to try. We ONLY use 'gemini-3-flash-preview' as it's the only one successfully verified.
-    // We repeat it 3 times to act as a "Retry Mechanism" for 'Overloaded' errors.
+    // List of models to try. Upgraded to stable 2.0 Flash.
     const modelsToTry = [
-        'gemini-3-flash-preview',
-        'gemini-3-flash-preview',
-        'gemini-3-flash-preview'
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro'
     ];
     const sanitizedBase64 = cleanBase64(base64Image);
 
