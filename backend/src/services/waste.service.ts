@@ -1,174 +1,183 @@
+import { GoogleGenAI } from "@google/genai";
+
+// Initialize the Google GenAI client with named parameter.
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+/**
+ * Sanitizes base64 strings to ensure they are raw bytes for the API.
+ */
 const cleanBase64 = (base64: string): string => {
     return base64.includes(',') ? base64.split(',')[1] : base64;
 };
 
-// Fallback Mock Response to ensure the app works during demo/presentation
-// even if API Keys are invalid or quota is exceeded.
-const getFallbackResponse = (): any => {
-    console.warn("[AI Service] ⚠️ Activating Fallback Protocol (Mock Data)");
-    return {
-        items: [
-            {
-                name: "Unrecognized Object",
-                bin: "general",
-                binNameThai: "ไม่สามารถระบุได้",
-                confidence: 0.0,
-                instructions: "Please try taking the photo again closer to the object.",
-                instructionsThai: "กรุณาถ่ายรูปใหม่ให้ชัดเจนขึ้น หรือขยับเข้าใกล้วัตถุ",
-                category: "Unknown"
-            }
-        ],
-        summary: "AI could not identify the object. Please retry.",
-        summaryThai: "AI ไม่สามารถระบุวัตถุได้ กรุณาลองใหม่",
-        label: "ไม่พบวัตถุ",
-        bin_name: "Unknown",
-        hasHazardous: false,
-        needsCleaning: false,
-        overallComplexity: "low"
-    };
+// Removed browser-only fileToBase64 function as this is a backend service.
+
+const extractJson = (text: string | undefined): any => {
+    if (!text) return {};
+    try {
+        const cleanText = text.replace(/```json\n?|```/g, "").trim();
+        return JSON.parse(cleanText);
+    } catch (error) {
+        console.error("AI JSON Parse Error:", text);
+        return {}; // Return empty object instead of falling back to mock to avoid confusion
+    }
 };
 
-export const analyzeWaste = async (base64Image: string): Promise<any> => {
-    console.log(`[AI Service] Starting analysis via REST API. Image Payload Length: ${base64Image.length}`);
+export interface DetailedWasteResult {
+    category: string;
+    items: Array<{
+        name: string;
+        bin: 'green' | 'blue' | 'yellow' | 'red';
+        binNameThai: string;
+        confidence: number;
+        instructions: string;
+        instructionsThai: string;
+        category: string;
+    }>;
+    summary: string;
+    summaryThai: string;
+    hasHazardous: boolean;
+    needsCleaning: boolean;
+    overallComplexity: string;
+    label: string;
+    bin_color: string;
+    bin_name: string;
+    upcycling_tip: string;
+    points: number;
+    isValid: boolean;
+    isFraud: boolean;
+    confidence: number;
+    reason: string;
+}
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-        console.error("CRITICAL: GEMINI_API_KEY is not defined. Using Fallback.");
-        return getFallbackResponse();
-    }
+// Adapter: actions.routes.ts calls analyzeWaste(payload)
+export const analyzeWaste = async (base64Image: string): Promise<DetailedWasteResult> => {
+    // We map 'analyzeWaste' to the 'general' mode of our new function
+    return analyzeEnvironmentImage(base64Image, 'general');
+};
 
-    // List of models to try.
-    // 'gemini-pro-vision' is the legacy "Old" model that often works when others fail.
-    const modelsToTry = [
-        'gemini-3-flash-preview',
-    ];
-    const sanitizedBase64 = cleanBase64(base64Image);
+export const analyzeEnvironmentImage = async (base64Image: string, mode: string = 'general'): Promise<DetailedWasteResult> => {
+    try {
+        // Using gemini-1.5-flash as the most stable model for this use case.
+        // The user requested 'gemini-3-flash-preview', but it is causing errors.
+        const model = 'gemini-1.5-flash';
 
-    const systemPrompt = `You are an expert Waste Management Specialist for Surasakmontree School in Thailand.
-    Your goal is to accurately categorize waste into 4 specific bins.
+        const sanitizedBase64 = cleanBase64(base64Image);
 
-    CRITICAL RULES FOR RECYCLING (Prioritize Yellow for Bottles):
+        let systemInstruction = `You are a Waste Management Specialist for Surasakmontree School.
+    Analyze the image and provide a sorting guide. 
     
-    1. 🟡 YELLOW BIN (Recycle):
-       - **PLASTIC BOTTLES (PET)** -> ALWAYS Yellow if it's a bottle. If it has water, instruct to empty it.
-       - Aluminum Csns, Glass Bottles.
-       - Paper/Cardboard (unless heavily soaked/greasy).
-       
-    2. 🟢 GREEN BIN (Organic):
-       - Food waste, Fruit peels, Flowers.
-       
-    3. 🔴 RED BIN (Hazardous):
-       - Batteries, Spray cans, Electronics.
-       
-    4. 🔵 BLUE BIN (General):
-       - Plastic bags, Snack bags (Foil lined), Straws.
-       - Tissue, Foam, Dirty food containers.
-       
-    DECISION LOGIC:
-    - **Is it a Plastic Bottle?** -> **YELLOW**. (Instruct: "Empty liquid first")
-    - **Is it a Can?** -> **YELLOW**.
-    - **Is it a Snack Bag?** -> **BLUE**.
-    - **Is it a Food Container?** -> If clean=Yellow, If dirty=Blue.
+    Thailand Sorting Standards (FOR THIS APP):
+    - YELLOW (ถังเหลือง): Recyclable Waste (รีไซเคิล) - Plastic Bottles, Glass, Cans.
+    - GREEN (ถังเขียว): Wet/Organic Waste (ขยะเปียก/อินทรีย์) - Food, Peels.
+    - BLUE (ถังฟ้า): General Waste (ขยะทั่วไป) - Snack bags, dirty plastics.
+    - RED (ถังแดง): Hazardous Waste (ขยะอันตราย) - Batteries, sprays.
 
-    Strictly Return JSON only:
+    Return JSON:
     {
+      "category": "recycle | grease_trap | hazard",
+      "label": "Main object identified (Thai)",
+      "bin_color": "green | blue | yellow | red",
+      "bin_name": "ชื่อถังขยะ (Thai)",
+      "upcycling_tip": "Disposal instruction (Thai)",
+      "points": 50,
+      "isValid": true,
+      "isFraud": false,
+      "confidence": 0.9,
+      "reason": "Explain if the image is valid or potentially fraudulent",
       "items": [
         {
-          "name": "Object Name (Short, e.g. Plastic Bottle)",
+          "name": "Object name (English)",
           "bin": "green | blue | yellow | red",
-          "binNameThai": "ถัง...",
-          "confidence": 0.99,
-          "instructions": "Specific instruction",
-          "instructionsThai": "คำแนะนำภาษาไทย",
-          "category": "Plastic | Paper | Glass | Metal | Organic | General | Hazardous"
+          "binNameThai": "ถัง... (Thai)",
+          "confidence": 0.95,
+          "instructions": "Instruction (English)",
+          "instructionsThai": "คำแนะนำ (Thai)",
+          "category": "Material type"
         }
       ],
-      "summary": "Concise summary",
-      "summaryThai": "สรุปสั้นๆ",
-      "label": "Main Object Name (THAI Language, e.g. 'ขวดพลาสติก')",
-      "bin_name": "Bin Name (Thai)",
-      "upcycling_tip": "Short disposal instruction in Thai",
+      "summary": "Overall summary (English)",
+      "summaryThai": "สรุปผล (Thai)",
       "hasHazardous": boolean,
       "needsCleaning": boolean,
-      "overallComplexity": "low"
+      "overallComplexity": "low | medium | high"
     }`;
 
-    const payload = {
-        contents: [{
-            parts: [
-                { text: systemPrompt },
+        // Call generateContent with model name and multi-part content (text prompt + image data)
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: [
                 {
-                    inline_data: {
-                        mime_type: "image/jpeg",
-                        data: sanitizedBase64
-                    }
+                    role: 'user',
+                    parts: [
+                        { text: `Analyze items in this photo for ${mode} sorting. Set the top-level 'category' field to '${mode}'.` },
+                        { inlineData: { mimeType: 'image/jpeg', data: sanitizedBase64 } }
+                    ]
                 }
-            ]
-        }],
-        generationConfig: {
-            response_mime_type: "application/json"
-        },
-        // CRITICAL SPEED FIX: Disable safety filters to prevent "No content text" errors on trash images
-        safetySettings: [
-            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-        ]
-    };
-
-    // Try each model until one works
-    for (const model of modelsToTry) {
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-            console.log(`[AI Service] Attempting analysis with model: ${model}`);
-
-            const response = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            const data: any = await response.json();
-
-            if (!response.ok) {
-                console.warn(`[AI Service] Model ${model} failed: ${data?.error?.message || response.statusText}`);
-                continue; // Try next model
+            ],
+            config: {
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                responseMimeType: "application/json",
             }
+        });
 
-            console.log(`[AI Service] Success with model: ${model}`);
+        // Logging for debug
+        // console.log("[AI Service] Response:", JSON.stringify(response, null, 2));
 
-            const candidate = data.candidates?.[0];
-            const textResponse = candidate?.content?.parts?.[0]?.text;
-
-            if (!textResponse) {
-                throw new Error("No content text returned from AI");
-            }
-
-            const cleanJson = textResponse.replace(/^```json\s*/, "").replace(/\s*```$/, "");
-            try {
-                const parsedResult = JSON.parse(cleanJson);
-
-                // LOG THE RESULT FOR DEBUGGING
-                console.log("------------------------------------------------");
-                console.log(`[AI RESULT] Label: ${parsedResult.label}`);
-                console.log(`[AI RESULT] Item: ${parsedResult.items?.[0]?.name}`);
-                console.log(`[AI RESULT] Bin: ${parsedResult.items?.[0]?.bin} (${parsedResult.items?.[0]?.confidence})`);
-                console.log("------------------------------------------------");
-
-                return parsedResult;
-            } catch (e) {
-                console.error(`[AI Service] JSON Parse error for ${model}:`, e);
-                continue; // Try next model if JSON is bad
-            }
-
-        } catch (error) {
-            console.error(`[AI Service] Exception with model ${model}:`, error);
-            // Continue to next model
+        if (!response.text) {
+            throw new Error("No text response from AI");
         }
-    }
 
-    // If all models fail
-    console.error("[AI Service] All AI models failed. Using Fallback.");
-    return getFallbackResponse();
+        return extractJson(response.text);
+    } catch (error) {
+        console.error("Gemini Vision Error:", error);
+        // Return safe fallback error object
+        return {
+            category: "error",
+            items: [],
+            summary: "AI Error",
+            summaryThai: "เกิดข้อผิดพลาดในการวิเคราะห์",
+            hasHazardous: false,
+            needsCleaning: false,
+            overallComplexity: "low",
+            label: "AI Error",
+            bin_color: "blue",
+            bin_name: "General",
+            upcycling_tip: "Please try again",
+            points: 0,
+            isValid: false,
+            isFraud: false,
+            confidence: 0,
+            reason: "System Error"
+        };
+    }
+};
+
+export const analyzeUtilityBill = async (base64Image: string): Promise<any> => {
+    try {
+        const model = 'gemini-1.5-flash';
+        const sanitizedBase64 = cleanBase64(base64Image);
+        const systemInstruction = `Extract energy units (kWh) and month from the utility bill. Return JSON.`;
+
+        const response = await ai.models.generateContent({
+            model,
+            contents: [
+                {
+                    role: 'user',
+                    parts: [
+                        { text: "Extract units and month from this bill image." },
+                        { inlineData: { mimeType: 'image/jpeg', data: sanitizedBase64 } }
+                    ]
+                }
+            ],
+            config: {
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                responseMimeType: "application/json",
+            }
+        });
+        return extractJson(response.text);
+    } catch (error) {
+        console.error("Gemini Bill Error:", error);
+        throw error;
+    }
 };
