@@ -9,19 +9,19 @@ const getFallbackResponse = (): any => {
     return {
         items: [
             {
-                name: "Plastic Bottle (Simulation)",
-                bin: "yellow",
-                binNameThai: "ถังเหลือง (รีไซเคิล)",
-                confidence: 0.99,
-                instructions: "Empty liquid, crush, and place in yellow bin.",
-                instructionsThai: "เทน้ำออก บีบให้แบน และทิ้งลงถังเหลือง",
-                category: "Plastic"
+                name: "Unrecognized Object",
+                bin: "general",
+                binNameThai: "ไม่สามารถระบุได้",
+                confidence: 0.0,
+                instructions: "Please try taking the photo again closer to the object.",
+                instructionsThai: "กรุณาถ่ายรูปใหม่ให้ชัดเจนขึ้น หรือขยับเข้าใกล้วัตถุ",
+                category: "Unknown"
             }
         ],
-        summary: "Recyclable plastic bottle detected.",
-        summaryThai: "ตรวจพบขวดพลาสติก รีไซเคิลได้",
-        label: "Plastic Bottle",
-        bin_name: "ถังเหลือง (Recycle)",
+        summary: "AI could not identify the object. Please retry.",
+        summaryThai: "AI ไม่สามารถระบุวัตถุได้ กรุณาลองใหม่",
+        label: "ไม่พบวัตถุ",
+        bin_name: "Unknown",
         hasHazardous: false,
         needsCleaning: false,
         overallComplexity: "low"
@@ -37,11 +37,12 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
         return getFallbackResponse();
     }
 
-    // List of models to try. Upgraded to stable 2.0 Flash.
+    // List of models to try. Reverted to standard stable versions compatible with v1beta free tier.
     const modelsToTry = [
-        'gemini-2.0-flash',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro'
+        'gemini-1.5-flash',       // Standard Alias
+        'gemini-1.5-flash-latest', // Rolling release
+        'gemini-1.5-flash-001',    // Specific version
+        'gemini-2.0-flash-exp'     // Experimental 2.0 (if available)
     ];
     const sanitizedBase64 = cleanBase64(base64Image);
 
