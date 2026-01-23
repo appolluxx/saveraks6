@@ -57,14 +57,18 @@ export const analyzeWaste = async (base64Image: string): Promise<DetailedWasteRe
 };
 
 export const analyzeEnvironmentImage = async (base64Image: string, mode: string = 'general'): Promise<DetailedWasteResult> => {
-    try {
-        // Using gemini-1.5-flash as the most stable model for this use case.
-        // The user requested 'gemini-3-flash-preview', but it is causing errors.
-        const model = 'gemini-1.5-flash';
+    const modelsToTry = [
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-001',
+        'gemini-1.5-flash-latest',
+        'gemini-1.5-pro',
+        'gemini-1.5-pro-001',
+        'gemini-2.0-flash-exp' // Try experimental last
+    ];
 
-        const sanitizedBase64 = cleanBase64(base64Image);
+    const sanitizedBase64 = cleanBase64(base64Image);
 
-        let systemInstruction = `You are a Waste Management Specialist for Surasakmontree School.
+    const systemInstruction = `You are a Waste Management Specialist for Surasakmontree School.
     Analyze the image and provide a sorting guide. 
     
     Thailand Sorting Standards (FOR THIS APP):
@@ -103,54 +107,63 @@ export const analyzeEnvironmentImage = async (base64Image: string, mode: string 
       "overallComplexity": "low | medium | high"
     }`;
 
-        // Call generateContent with model name and multi-part content (text prompt + image data)
-        const response = await ai.models.generateContent({
-            model: model,
-            contents: [
-                {
-                    role: 'user',
-                    parts: [
-                        { text: `Analyze items in this photo for ${mode} sorting. Set the top-level 'category' field to '${mode}'.` },
-                        { inlineData: { mimeType: 'image/jpeg', data: sanitizedBase64 } }
-                    ]
+    let lastError;
+
+    for (const model of modelsToTry) {
+        try {
+            console.log(`[AI Service] Attempting analysis with model: ${model}`);
+            const response = await ai.models.generateContent({
+                model: model,
+                contents: [
+                    {
+                        role: 'user',
+                        parts: [
+                            { text: `Analyze items in this photo for ${mode} sorting. Set the top-level 'category' field to '${mode}'.` },
+                            { inlineData: { mimeType: 'image/jpeg', data: sanitizedBase64 } }
+                        ]
+                    }
+                ],
+                config: {
+                    systemInstruction: { parts: [{ text: systemInstruction }] },
+                    responseMimeType: "application/json",
                 }
-            ],
-            config: {
-                systemInstruction: { parts: [{ text: systemInstruction }] },
-                responseMimeType: "application/json",
+            });
+
+            if (!response.text) {
+                console.warn(`[AI Service] Model ${model} returned empty response.`);
+                continue; // Try next
             }
-        });
 
-        // Logging for debug
-        // console.log("[AI Service] Response:", JSON.stringify(response, null, 2));
+            console.log(`[AI Service] Success with model: ${model}`);
+            return extractJson(response.text);
 
-        if (!response.text) {
-            throw new Error("No text response from AI");
+        } catch (error: any) {
+            console.warn(`[AI Service] Model ${model} failed: ${error.message}`);
+            lastError = error;
+            // Continue to next model
         }
-
-        return extractJson(response.text);
-    } catch (error) {
-        console.error("Gemini Vision Error:", error);
-        // Return safe fallback error object
-        return {
-            category: "error",
-            items: [],
-            summary: "AI Error",
-            summaryThai: "เกิดข้อผิดพลาดในการวิเคราะห์",
-            hasHazardous: false,
-            needsCleaning: false,
-            overallComplexity: "low",
-            label: "AI Error",
-            bin_color: "blue",
-            bin_name: "General",
-            upcycling_tip: "Please try again",
-            points: 0,
-            isValid: false,
-            isFraud: false,
-            confidence: 0,
-            reason: "System Error"
-        };
     }
+
+    // If all failed
+    console.error("Gemini Vision Error (All Models Failed):", lastError);
+    return {
+        category: "error",
+        items: [],
+        summary: "AI Service Unavailable",
+        summaryThai: "ไม่สามารถเชื่อมต่อกับ AI ได้ในขณะนี้",
+        hasHazardous: false,
+        needsCleaning: false,
+        overallComplexity: "low",
+        label: "Service Error",
+        bin_color: "blue",
+        bin_name: "General",
+        upcycling_tip: "Please try again later",
+        points: 0,
+        isValid: false,
+        isFraud: false,
+        confidence: 0,
+        reason: "All AI models failed to respond"
+    };
 };
 
 export const analyzeUtilityBill = async (base64Image: string): Promise<any> => {
