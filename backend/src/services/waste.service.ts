@@ -68,12 +68,9 @@ const getFallbackResponse = (): any => {
 };
 
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
-    // Updated model names for current Gemini API
+    // Use the working model that you identified
     const modelsToTry = [
-        'gemini-1.5-flash-latest',  // Updated name
-        'gemini-1.5-pro-latest',     // Updated name  
-        'gemini-1.0-pro-latest',     // Fallback to older stable version
-        'gemini-pro'                 // Original model as last resort
+        'gemini-2.0-flash-exp'  // This is the model that actually works
     ];
 
     const sanitizedBase64 = cleanBase64(base64Image);
