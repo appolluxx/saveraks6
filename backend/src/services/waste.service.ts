@@ -10,9 +10,9 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 // Helper function to list available models (for debugging)
 const listAvailableModels = async (): Promise<string[]> => {
     try {
-        // This would require admin API access, so we'll log the models we're trying
+        // Updated to use the correct model name from official docs
         const models = [
-            'gemini-2.0-flash-exp'
+            'gemini-3-flash-preview'  // Official model name from Gemini API docs
         ];
         console.log('[AI Service] Available models to try:', models);
         return models;
@@ -68,9 +68,9 @@ const getFallbackResponse = (): any => {
 };
 
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
-    // Use the working model that you identified
+    // Use the correct model name from official Gemini API documentation
     const modelsToTry = [
-        'gemini-2.0-flash-exp'  // This is the model that actually works
+        'gemini-3-flash-preview'  // Official model name from Gemini API docs
     ];
 
     const sanitizedBase64 = cleanBase64(base64Image);

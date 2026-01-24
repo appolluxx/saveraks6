@@ -19,13 +19,12 @@ async function testGeminiAPI() {
         
         // Test different model names
         const models = [
-            'gemini-1.5-flash-latest',
-            'gemini-1.5-pro-latest', 
-            'gemini-1.0-pro-latest',
-            'gemini-pro',
-            'gemini-1.5-flash',
-            'gemini-1.5-pro',
-            'gemini-pro-vision'
+            'gemini-3-flash-preview',  // Official model from docs
+            'gemini-2.0-flash-exp',    // Previous experimental
+            'gemini-1.5-flash-latest', // Previous version
+            'gemini-1.5-pro-latest',   // Previous version
+            'gemini-1.0-pro-latest',   // Previous version
+            'gemini-pro'               // Original model
         ];
         
         for (const modelName of models) {
