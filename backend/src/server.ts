@@ -53,13 +53,14 @@ app.use((req, res, next) => {
 
 import leaderboardRoutes from './routes/leaderboard.routes.js';
 import marketplaceRoutes from './routes/marketplace.routes.js'; // Import Marketplace
+import anticheatRoutes from './routes/anticheat.routes.js'; // Import Anti-Cheat
 
 app.use('/api/auth', authRoutes);
 app.use('/api/actions', actionRoutes);
 app.use('/api/pins', pinRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/marketplace', marketplaceRoutes); // Mount Marketplace
-app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/anticheat', anticheatRoutes); // Mount Anti-Cheat
 
 
 

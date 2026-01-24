@@ -116,13 +116,22 @@ model EcoAction {
   description  String?
   imageUrl     String?      @map("image_url")
   imageHash    String?      @map("image_hash")
+  pHash        String?      @map("p_hash")
+  dHash        String?      @map("d_hash")
+  aHash        String?      @map("a_hash")
+  histogram    Json?        @map("histogram")
+  
   locationLat  Decimal?     @map("location_lat") @db.Decimal(10, 8)
   locationLng  Decimal?     @map("location_lng") @db.Decimal(11, 8)
   locationName String?      @map("location_name")
   pointsEarned Int          @default(0) @map("points_earned")
   aiAnalysis   String?      @map("ai_analysis")
   aiScore      Decimal?     @map("ai_score") @db.Decimal(3, 2)
+  
   status       ActionStatus @default(pending)
+  isFlagged    Boolean      @default(false) @map("is_flagged")
+  flagReason   String?      @map("flag_reason")
+  
   reviewedBy   String?      @map("reviewed_by")
   reviewedAt   DateTime?    @map("reviewed_at")
   createdAt    DateTime     @default(now()) @map("created_at")
@@ -133,10 +142,21 @@ model EcoAction {
   verifiedAt     DateTime?  @map("verified_at")
   distanceKm     Decimal?   @map("distance_km") @db.Decimal(5, 2)
 
+  // Anti-cheat tracking fields
+  deviceFingerprint String?  @map("device_fingerprint")
+  imageQuality      Decimal?  @map("image_quality") @db.Decimal(3, 2)
+  ipAddress         String?   @map("ip_address")
+  userAgent         String?   @map("user_agent")
+
   user     User  @relation("UserActions", fields: [userId], references: [id], onDelete: Cascade)
   reviewer User? @relation("ReviewedActions", fields: [reviewedBy], references: [id])
 
   @@index([imageHash])
+  @@index([pHash])
+  @@index([dHash])
+  @@index([aHash])
+  @@index([deviceFingerprint])
+  @@index([createdAt])
   @@map("eco_actions")
 }
 

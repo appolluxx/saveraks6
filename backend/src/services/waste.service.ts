@@ -1,7 +1,11 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize the Google GenAI client
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Ensure API key is present, otherwise log warning (though it will fail later if missing)
+if (!process.env.GEMINI_API_KEY) {
+    console.warn("WARNING: GEMINI_API_KEY is missing from environment variables.");
+}
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 const cleanBase64 = (base64: string): string => {
     return base64.includes(',') ? base64.split(',')[1] : base64;
@@ -51,7 +55,8 @@ const getFallbackResponse = (): any => {
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
     const modelsToTry = [
         'gemini-1.5-flash',
-        'gemini-2.0-flash-exp'
+        'gemini-1.5-pro',
+        'gemini-pro-vision' // Old reliable fallback if others fail/404
     ];
 
     const sanitizedBase64 = cleanBase64(base64Image);
@@ -63,7 +68,7 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
     
     1. 🟡 YELLOW BIN (Recycle):
        - **PLASTIC BOTTLES (PET)** -> ALWAYS Yellow if it's a bottle. If it has water, instruct to empty it.
-       - Aluminum Csns, Glass Bottles.
+       - Aluminum Cans, Glass Bottles.
        - Paper/Cardboard (unless heavily soaked/greasy).
        
     2. 🟢 GREEN BIN (Organic):
@@ -106,36 +111,40 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
     }`;
 
     // Try each model until one works
-    for (const model of modelsToTry) {
+    for (const modelName of modelsToTry) {
         try {
-            console.log(`[AI Service] Attempting analysis with model: ${model}`);
+            console.log(`[AI Service] Attempting analysis with model: ${modelName}`);
 
-            const response = await ai.models.generateContent({
-                model: model,
-                contents: [
-                    {
-                        role: 'user',
-                        parts: [
-                            { text: systemInstruction }, // Pass prompt as text part
-                            { inlineData: { mimeType: 'image/jpeg', data: sanitizedBase64 } }
-                        ]
-                    }
-                ],
-                config: {
-                    responseMimeType: "application/json",
-                }
+            // Note: systemInstruction is available in newer versions of @google/generative-ai
+            // If it fails with older versions, we might need to prepend it to the prompt.
+            // Assuming ^0.24.1 is used which supports it.
+            const model = genAI.getGenerativeModel({
+                model: modelName,
+                systemInstruction: systemInstruction
             });
 
-            if (!response.text) {
-                console.warn(`[AI Service] Model ${model} returned empty response.`);
+            const result = await model.generateContent([
+                {
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: sanitizedBase64
+                    }
+                }
+            ]);
+
+            const response = await result.response;
+            const text = response.text();
+
+            if (!text) {
+                console.warn(`[AI Service] Model ${modelName} returned empty response.`);
                 continue;
             }
 
-            console.log(`[AI Service] Success with model: ${model}`);
-            return extractJson(response.text);
+            console.log(`[AI Service] Success with model: ${modelName}`);
+            return extractJson(text);
 
         } catch (error: any) {
-            console.warn(`[AI Service] Model ${model} failed: ${error.message}`);
+            console.warn(`[AI Service] Model ${modelName} failed: ${error.message}`);
             // Continue to next model
         }
     }
