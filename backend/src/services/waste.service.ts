@@ -7,6 +7,24 @@ if (!process.env.GEMINI_API_KEY) {
 }
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
+// Helper function to list available models (for debugging)
+const listAvailableModels = async (): Promise<string[]> => {
+    try {
+        // This would require admin API access, so we'll log the models we're trying
+        const models = [
+            'gemini-1.5-flash-latest',
+            'gemini-1.5-pro-latest', 
+            'gemini-1.0-pro-latest',
+            'gemini-pro'
+        ];
+        console.log('[AI Service] Available models to try:', models);
+        return models;
+    } catch (error) {
+        console.error('[AI Service] Could not list models:', error);
+        return [];
+    }
+};
+
 const cleanBase64 = (base64: string): string => {
     return base64.includes(',') ? base64.split(',')[1] : base64;
 };
@@ -53,10 +71,12 @@ const getFallbackResponse = (): any => {
 };
 
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
+    // Updated model names for current Gemini API
     const modelsToTry = [
-        'gemini-1.5-flash',
-        'gemini-1.5-pro',
-        'gemini-pro-vision' // Old reliable fallback if others fail/404
+        'gemini-1.5-flash-latest',  // Updated name
+        'gemini-1.5-pro-latest',     // Updated name  
+        'gemini-1.0-pro-latest',     // Fallback to older stable version
+        'gemini-pro'                 // Original model as last resort
     ];
 
     const sanitizedBase64 = cleanBase64(base64Image);
@@ -111,9 +131,16 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
     }`;
 
     // Try each model until one works
+    await listAvailableModels(); // Log available models for debugging
+    
     for (const modelName of modelsToTry) {
         try {
             console.log(`[AI Service] Attempting analysis with model: ${modelName}`);
+
+            // Check if API key is valid
+            if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your-api-key-here') {
+                throw new Error('Invalid or missing GEMINI_API_KEY');
+            }
 
             // Note: systemInstruction is available in newer versions of @google/generative-ai
             // If it fails with older versions, we might need to prepend it to the prompt.
@@ -145,6 +172,16 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
 
         } catch (error: any) {
             console.warn(`[AI Service] Model ${modelName} failed: ${error.message}`);
+            
+            // Log more details for debugging
+            if (error.message.includes('404')) {
+                console.error(`[AI Service] Model ${modelName} not found (404). Check model name availability.`);
+            } else if (error.message.includes('403') || error.message.includes('permission')) {
+                console.error(`[AI Service] Permission denied. Check API key and quotas.`);
+            } else if (error.message.includes('API key')) {
+                console.error(`[AI Service] API key issue. Verify GEMINI_API_KEY environment variable.`);
+            }
+            
             // Continue to next model
         }
     }
