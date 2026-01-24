@@ -12,10 +12,7 @@ const listAvailableModels = async (): Promise<string[]> => {
     try {
         // This would require admin API access, so we'll log the models we're trying
         const models = [
-            'gemini-1.5-flash-latest',
-            'gemini-1.5-pro-latest', 
-            'gemini-1.0-pro-latest',
-            'gemini-pro'
+            'gemini-2.0-flash-exp'
         ];
         console.log('[AI Service] Available models to try:', models);
         return models;
