@@ -104,8 +104,6 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
         }
 
         let pHash: string | null = null;
-        let dHash: string | null = null;
-        let aHash: string | null = null;
         let histogram: any = null;
         let isFlagged = false;
         let flagReason: string | null = null;
@@ -135,8 +133,6 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
                 // Compute Enhanced Fingerprint
                 const fingerprint = await EnhancedAntiCheatService.computeFingerprint(buffer);
                 pHash = fingerprint.pHash;
-                dHash = fingerprint.dHash;
-                aHash = fingerprint.aHash;
                 histogram = fingerprint.histogram;
                 imageQuality = fingerprint.quality;
 
@@ -178,8 +174,6 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
                 imageUrl,
                 imageHash: null, // Legacy field
                 pHash,
-                dHash,
-                aHash,
                 histogram,
                 isFlagged,
                 flagReason,
@@ -189,12 +183,8 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
                 distanceKm: distanceKm ? parseFloat(distanceKm) : null,
                 pointsEarned: points,
                 status: status,
-                verifiedAt: locationLat && locationLng ? new Date() : null,
-                // Enhanced anti-cheat fields
-                deviceFingerprint,
-                imageQuality: imageQuality ? parseFloat(imageQuality.toFixed(2)) : null,
-                ipAddress: req.ip,
-                userAgent: req.get('User-Agent')
+                verifiedAt: locationLat && locationLng ? new Date() : null
+                // Note: Enhanced anti-cheat fields (dHash, aHash) will be added after schema migration
             },
             include: { user: true }
         });

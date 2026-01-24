@@ -10,7 +10,20 @@ export interface ImageFingerprint {
     dHash: string;
     aHash: string;
     histogram: number[];
+    siftFeatures?: number[];
+    exifData?: ExifData;
     quality: number;
+}
+
+export interface ExifData {
+    make?: string;
+    model?: string;
+    dateTime?: Date;
+    gpsLat?: number;
+    gpsLng?: number;
+    software?: string;
+    imageWidth?: number;
+    imageHeight?: number;
 }
 
 export interface AntiCheatResult {
@@ -21,6 +34,85 @@ export interface AntiCheatResult {
     score?: number;
     detectionMethod: string;
     requiresReview: boolean;
+}
+
+export interface UserBehavior {
+    submissionFrequency: number;
+    averageSimilarity: number;
+    flaggedSubmissions: number;
+    totalSubmissions: number;
+    lastSubmissionTime?: Date;
+    deviceFingerprint?: string;
+}
+
+// Enhanced Hamming Distance with error handling
+function hammingDistance(hex1: string, hex2: string): number {
+    if (!hex1 || !hex2 || hex1.length !== hex2.length) return 64;
+    
+    try {
+        const bin1 = BigInt('0x' + hex1).toString(2).padStart(64, '0');
+        const bin2 = BigInt('0x' + hex2).toString(2).padStart(64, '0');
+
+        let distance = 0;
+        for (let i = 0; i < bin1.length; i++) {
+            if (bin1[i] !== bin2[i]) distance++;
+        }
+        return distance;
+    } catch (e) {
+        return 64; // Max difference on error
+    }
+}
+
+// Enhanced histogram similarity using correlation
+function histogramCorrelation(hist1: number[], hist2: number[]): number {
+    if (hist1.length !== hist2.length) return 0;
+
+    const n = hist1.length;
+    const mean1 = hist1.reduce((a, b) => a + b, 0) / n;
+    const mean2 = hist2.reduce((a, b) => a + b, 0) / n;
+
+    let numerator = 0;
+    let denom1 = 0;
+    let denom2 = 0;
+
+    for (let i = 0; i < n; i++) {
+        const diff1 = hist1[i] - mean1;
+        const diff2 = hist2[i] - mean2;
+        numerator += diff1 * diff2;
+        denom1 += diff1 * diff1;
+        denom2 += diff2 * diff2;
+    }
+
+    const correlation = numerator / Math.sqrt(denom1 * denom2);
+    return isNaN(correlation) ? 0 : Math.abs(correlation);
+}
+
+// Extract basic EXIF-like metadata from image
+async function extractImageMetadata(imageBuffer: Buffer): Promise<ExifData> {
+    try {
+        const metadata = await sharp(imageBuffer).metadata();
+        return {
+            imageWidth: metadata.width,
+            imageHeight: metadata.height,
+            software: 'web-app', // Web uploads don't preserve camera EXIF
+        };
+    } catch (error) {
+        return {};
+    }
+}
+
+// Generate device fingerprint from request headers
+export function generateDeviceFingerprint(req: any): string {
+    const fingerprint = [
+        req.get('User-Agent') || '',
+        req.get('Accept-Language') || '',
+        req.get('Accept-Encoding') || '',
+        req.ip || '',
+        req.get('Sec-CH-UA') || '', // Chrome user agent hints
+        req.get('Sec-CH-UA-Mobile') || '',
+    ].join('|');
+    
+    return createHash('sha256').update(fingerprint).digest('hex').substring(0, 16);
 }
 
 export class EnhancedAntiCheatService {
@@ -38,16 +130,7 @@ export class EnhancedAntiCheatService {
      * Generate device fingerprint from request headers
      */
     static generateDeviceFingerprint(req: any): string {
-        const fingerprint = [
-            req.get('User-Agent') || '',
-            req.get('Accept-Language') || '',
-            req.get('Accept-Encoding') || '',
-            req.ip || '',
-            req.get('Sec-CH-UA') || '',
-            req.get('Sec-CH-UA-Mobile') || '',
-        ].join('|');
-        
-        return createHash('sha256').update(fingerprint).digest('hex').substring(0, 16);
+        return generateDeviceFingerprint(req);
     }
 
     /**
@@ -68,11 +151,15 @@ export class EnhancedAntiCheatService {
             // 3. Image Quality Assessment
             const quality = await this.assessImageQuality(imageBuffer);
 
+            // 4. Metadata Extraction
+            const exifData = await extractImageMetadata(imageBuffer);
+
             return {
                 pHash,
                 dHash,
                 aHash,
                 histogram,
+                exifData,
                 quality
             };
 
@@ -136,7 +223,7 @@ export class EnhancedAntiCheatService {
             .toBuffer();
 
         // Calculate average
-        const sum = resized.reduce((a, b) => a + b, 0);
+        const sum = resized.reduce((acc, val) => acc + val, 0);
         const average = sum / resized.length;
 
         // Generate hash
@@ -179,7 +266,7 @@ export class EnhancedAntiCheatService {
             .toBuffer({ resolveWithObject: true });
 
         // Convert to normalized array
-        const histogram = Array.from(data).map(v => Number((v / 255).toFixed(4)));
+        const histogram = Array.from(data).map(v => v / 255);
         return histogram;
     }
 
@@ -238,7 +325,19 @@ export class EnhancedAntiCheatService {
             };
         }
 
-        // 2. Image similarity check
+        // 2. Behavioral analysis
+        const behaviorCheck = await this.analyzeUserBehavior(userId);
+        if (behaviorCheck.flaggedSubmissions > behaviorCheck.totalSubmissions * 0.3) {
+            return {
+                isDuplicate: true,
+                confidence: 0.8,
+                detectionMethod: 'behavior',
+                requiresReview: true,
+                reason: 'High flag rate detected'
+            };
+        }
+
+        // 3. Image similarity check
         const candidates = await this.getSimilarityCandidates(userId);
         
         for (const candidate of candidates) {
@@ -285,13 +384,13 @@ export class EnhancedAntiCheatService {
         const pHashThreshold = isSameUser ? this.PHASH_STRICT_THRESHOLD : this.PHASH_GLOBAL_THRESHOLD;
 
         // Hash comparisons
-        const pHashDist = this.hammingDistance(fingerprint.pHash, candidate.pHash);
+        const pHashDist = hammingDistance(fingerprint.pHash, candidate.pHash);
         const dHashDist = 64; // Not available in DB yet, fallback to max distance
         const aHashDist = 64; // Not available in DB yet, fallback to max distance
 
         // Histogram correlation
         const histCorrelation = candidate.histogram ? 
-            this.histogramCorrelation(fingerprint.histogram, candidate.histogram) : 0;
+            histogramCorrelation(fingerprint.histogram, candidate.histogram) : 0;
 
         // Combined confidence calculation
         let confidence = 0;
@@ -364,6 +463,35 @@ export class EnhancedAntiCheatService {
     }
 
     /**
+     * Analyze user submission behavior
+     */
+    private static async analyzeUserBehavior(userId: string): Promise<UserBehavior> {
+        const now = new Date();
+        const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+        const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+        const [recentCount, hourlyCount, flaggedCount, totalCount, lastSubmission] = await Promise.all([
+            prisma.ecoAction.count({ where: { userId, createdAt: { gt: dayAgo } } }),
+            prisma.ecoAction.count({ where: { userId, createdAt: { gt: hourAgo } } }),
+            prisma.ecoAction.count({ where: { userId, isFlagged: true } }),
+            prisma.ecoAction.count({ where: { userId } }),
+            prisma.ecoAction.findFirst({ 
+                where: { userId }, 
+                orderBy: { createdAt: 'desc' },
+                select: { createdAt: true }
+            })
+        ]);
+
+        return {
+            submissionFrequency: hourlyCount,
+            averageSimilarity: 0, // Would need historical similarity data
+            flaggedSubmissions: flaggedCount,
+            totalSubmissions: totalCount,
+            lastSubmissionTime: lastSubmission?.createdAt
+        };
+    }
+
+    /**
      * Check submission cooldown
      */
     static async checkSubmissionCooldown(userId: string): Promise<{ allowed: boolean; waitTime?: number }> {
@@ -405,46 +533,5 @@ export class EnhancedAntiCheatService {
             allowed: true, 
             remaining: this.MAX_SUBMISSIONS_PER_HOUR - hourlyCount 
         };
-    }
-
-    // Helper methods
-    private static hammingDistance(hex1: string, hex2: string): number {
-        if (!hex1 || !hex2 || hex1.length !== hex2.length) return 64;
-        
-        try {
-            const bin1 = BigInt('0x' + hex1).toString(2).padStart(64, '0');
-            const bin2 = BigInt('0x' + hex2).toString(2).padStart(64, '0');
-
-            let distance = 0;
-            for (let i = 0; i < bin1.length; i++) {
-                if (bin1[i] !== bin2[i]) distance++;
-            }
-            return distance;
-        } catch (e) {
-            return 64; // Max difference on error
-        }
-    }
-
-    private static histogramCorrelation(hist1: number[], hist2: number[]): number {
-        if (hist1.length !== hist2.length) return 0;
-
-        const n = hist1.length;
-        const mean1 = hist1.reduce((a, b) => a + b, 0) / n;
-        const mean2 = hist2.reduce((a, b) => a + b, 0) / n;
-
-        let numerator = 0;
-        let denom1 = 0;
-        let denom2 = 0;
-
-        for (let i = 0; i < n; i++) {
-            const diff1 = hist1[i] - mean1;
-            const diff2 = hist2[i] - mean2;
-            numerator += diff1 * diff2;
-            denom1 += diff1 * diff1;
-            denom2 += diff2 * diff2;
-        }
-
-        const correlation = numerator / Math.sqrt(denom1 * denom2);
-        return isNaN(correlation) ? 0 : Math.abs(correlation);
     }
 }
