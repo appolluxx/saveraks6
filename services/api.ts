@@ -184,7 +184,14 @@ export const deployNode = async (pinData: any) => {
 
 export const getProfile = (): User | null => {
   const data = localStorage.getItem(STORAGE_KEY_USER);
-  if (!data) return null;
+  const token = localStorage.getItem(STORAGE_KEY_TOKEN);
+
+  // Enforce consistent state: User data AND Token must exist
+  if (!data || !token) {
+    if (data || token) logout(); // Clean up partial state
+    return null;
+  }
+
   try {
     const user = JSON.parse(data);
     if (!user.history) user.history = [];
@@ -192,6 +199,7 @@ export const getProfile = (): User | null => {
     if (user.totalSRT === undefined) user.totalSRT = user.points || 0;
     return user;
   } catch {
+    logout(); // Corrupted data
     return null;
   }
 };

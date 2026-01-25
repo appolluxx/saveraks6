@@ -10,9 +10,11 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 // Helper function to list available models (for debugging)
 const listAvailableModels = async (): Promise<string[]> => {
     try {
-        // Updated to use the correct model name from official docs
+        // Standard stable models
         const models = [
-            'gemini-3-flash-preview'  // Official model name from Gemini API docs
+            'gemini-1.5-flash',
+            'gemini-1.5-pro',
+            'gemini-pro-vision'
         ];
         console.log('[AI Service] Available models to try:', models);
         return models;
@@ -70,7 +72,9 @@ const getFallbackResponse = (): any => {
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
     // Use the correct model name from official Gemini API documentation
     const modelsToTry = [
-        'gemini-3-flash-preview'  // Official model name from Gemini API docs
+        'gemini-1.5-flash',
+        'gemini-1.5-pro',
+        'gemini-pro-vision'
     ];
 
     const sanitizedBase64 = cleanBase64(base64Image);
@@ -126,7 +130,7 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
 
     // Try each model until one works
     await listAvailableModels(); // Log available models for debugging
-    
+
     for (const modelName of modelsToTry) {
         try {
             console.log(`[AI Service] Attempting analysis with model: ${modelName}`);
@@ -166,7 +170,7 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
 
         } catch (error: any) {
             console.warn(`[AI Service] Model ${modelName} failed: ${error.message}`);
-            
+
             // Log more details for debugging
             if (error.message.includes('404')) {
                 console.error(`[AI Service] Model ${modelName} not found (404). Check model name availability.`);
@@ -175,7 +179,11 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
             } else if (error.message.includes('API key')) {
                 console.error(`[AI Service] API key issue. Verify GEMINI_API_KEY environment variable.`);
             }
-            
+            // 503 is Overloaded
+            else if (error.message.includes('503')) {
+                console.warn(`[AI Service] Model ${modelName} overloaded. Retrying next model.`);
+            }
+
             // Continue to next model
         }
     }
