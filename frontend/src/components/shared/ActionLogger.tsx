@@ -4,6 +4,11 @@ import { logActivity } from '../../services/api';
 import { ActionType, User } from '../../types';
 import { useTranslation } from 'react-i18next';
 
+// Added for camera capture
+const getMediaStream = async () => {
+  return await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+};
+
 interface ActionLoggerProps {
   user: User;
   onActivityLogged: () => void;
@@ -15,6 +20,53 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Camera related state & refs
+  const [showCamera, setShowCamera] = useState(false);
+  const cameraRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+
+  const startCamera = async () => {
+    try {
+      const stream = await getMediaStream();
+      mediaStreamRef.current = stream;
+      if (cameraRef.current) {
+        cameraRef.current.srcObject = stream;
+      }
+      setShowCamera(true);
+    } catch (err) {
+      console.error('Camera error:', err);
+      alert('Unable to access camera');
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!cameraRef.current || !canvasRef.current) return;
+    const video = cameraRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        if (blob) {
+          const capturedFile = new File([blob], 'capture.jpg', { type: blob.type });
+          setFile(capturedFile);
+        }
+        stopCamera();
+      }, 'image/jpeg');
+    }
+  };
+
+  const stopCamera = () => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+    setShowCamera(false);
+  };
 
   const [transportMode, setTransportMode] = useState('Walk');
 
@@ -292,7 +344,7 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
             </div>
 
             <div
-              onClick={() => fileInputRef.current?.click()}
+              onClick={startCamera}
               className="group border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-green-50 hover:border-green-400 rounded-[24px] p-8 cursor-pointer transition-all duration-300 ease-out"
             >
               <div className="flex flex-col items-center gap-3">
@@ -302,15 +354,30 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
                     {file.name}
                   </span>
                 ) : (
-                  <div className="text-center">
+                  <>
                     <p className="text-slate-600 font-bold text-sm">Tap to Capture</p>
                     <span className="text-slate-400 text-xs mt-1 block">Image/Video captured via camera</span>
-                  </div>
+                  </>
                 )}
               </div>
             </div>
+            {/* Camera modal (shared for both tabs) */}
+            {showCamera && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
+                <div className="bg-white p-4 rounded-lg shadow-lg relative">
+                  <video ref={cameraRef} autoPlay playsInline className="w-80 h-60 bg-black" />
+                  <canvas ref={canvasRef} className="hidden" />
+                  <button onClick={capturePhoto} className="mt-2 w-full bg-green-600 text-white py-2 rounded">
+                    Capture Photo
+                  </button>
+                  <button onClick={stopCamera} className="mt-2 w-full bg-red-600 text-white py-2 rounded">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )
 
-            <input type="file" ref={fileInputRef} className="hidden" accept="video/*,image/*" capture="environment" onChange={handleFileChange} />
+              {/* hidden file input removed */}
 
             <button
               onClick={handleSubmit}
@@ -333,7 +400,7 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
             </div>
 
             <div
-              onClick={() => fileInputRef.current?.click()}
+              onClick={startCamera}
               className="group border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-400 rounded-[24px] p-8 cursor-pointer transition-all duration-300 ease-out"
             >
               <div className="flex flex-col items-center gap-3">
@@ -343,10 +410,10 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
                     {file.name}
                   </span>
                 ) : (
-                  <div className="text-center">
+                  <>
                     <p className="text-slate-600 font-bold text-sm">Tap to Capture</p>
                     <span className="text-slate-400 text-xs mt-1 block">Photos of turned off devices</span>
-                  </div>
+                  </>
                 )}
               </div>
             </div>
