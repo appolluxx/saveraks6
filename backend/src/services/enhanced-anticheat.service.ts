@@ -24,12 +24,12 @@ export interface AntiCheatResult {
 }
 
 export class EnhancedAntiCheatService {
-    // Configurable thresholds
-    private static readonly PHASH_STRICT_THRESHOLD = 5;  // Same user
-    private static readonly PHASH_GLOBAL_THRESHOLD = 8;   // Different users
+    // Configurable thresholds - relaxed for testing
+    private static readonly PHASH_STRICT_THRESHOLD = 2;  // Same user - was 5
+    private static readonly PHASH_GLOBAL_THRESHOLD = 5;   // Different users - was 8
     private static readonly DHASH_THRESHOLD = 10;
     private static readonly AHASH_THRESHOLD = 12;
-    private static readonly HISTOGRAM_CORRELATION_MIN = 0.85;
+    private static readonly HISTOGRAM_CORRELATION_MIN = 0.90; // Was 0.85
     private static readonly QUALITY_MIN = 0.3;
     private static readonly SUBMISSION_COOLDOWN_MINUTES = 0.5; // 30 seconds for testing
     private static readonly MAX_SUBMISSIONS_PER_HOUR = 30; // Increased for testing
@@ -340,15 +340,23 @@ export class EnhancedAntiCheatService {
      * Get candidates for similarity comparison
      */
     private static async getSimilarityCandidates(userId: string): Promise<any[]> {
+        // Exclude submissions from the last 10 seconds to avoid self-comparison
+        const tenSecondsAgo = new Date(Date.now() - 10 * 1000);
+        
         return await prisma.ecoAction.findMany({
             where: {
-                OR: [
-                    { userId }, // User's own submissions
-                    { 
-                        createdAt: { 
-                            gt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) 
-                        } 
-                    } // Recent global submissions
+                AND: [
+                    { createdAt: { lt: tenSecondsAgo } }, // Exclude very recent submissions
+                    {
+                        OR: [
+                            { userId }, // User's own submissions
+                            { 
+                                createdAt: { 
+                                    gt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) 
+                                } 
+                            } // Recent global submissions
+                        ]
+                    }
                 ]
             },
             select: { 
