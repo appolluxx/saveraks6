@@ -83,6 +83,20 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
     }
   };
 
+  // Helper to convert file to base64
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  // Import analyzeImage at the top of the file
+  // import { logActivity, analyzeImage } from '../../services/api'; 
+  // (Make sure to update imports in a separate step or assume it is available if I change import line)
+
   const handleSubmit = async () => {
     if (activeTab === 'TRANS' && !status.canLog) {
       alert(status.reason);
@@ -94,24 +108,64 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
       if (activeTab === 'TRANS') {
         const mode = transportModes.find(m => m.id === transportMode) || transportModes[0];
         await logActivity(mode.type, { label: `${t('logger.transport')}: ${mode.label}`, points: mode.points });
+        onActivityLogged();
+        alert(t('logger.success'));
       }
       else if (activeTab === 'ENERGY' && file) {
+        // AI Verification for Energy
+        const base64 = await convertToBase64(file);
+        const analysis = await import('../../services/api').then(m => m.analyzeImage(base64));
+
+        // Simple keywords check based on analysis summary or label
+        const keywords = ['switch', 'light', 'lamp', 'plug', 'off', 'dark', 'electronic', 'appliance', 'air conditioner', 'fan'];
+        const text = (analysis.summary + ' ' + analysis.label + ' ' + (analysis.items?.[0]?.name || '')).toLowerCase();
+
+        const isEnergyRelated = keywords.some(k => text.includes(k));
+
+        if (!isEnergyRelated && !analysis.isValid) { // Allow if marked valid by AI logic directly
+          if (!window.confirm("AI ไม่มั่นใจว่าเป็นรูปเกี่ยวกับการประหยัดพลังงาน (เช่น ปิดไฟ, ถอดปลั๊ก) ต้องการส่งต่อหรือไม่?")) {
+            setLoading(false);
+            return;
+          }
+        }
+
         await logActivity(ActionType.ENERGY_SAVING, {
           category: 'energy',
           label: t('logger.energy_saving'),
-          points: 5
+          points: 5,
+          fileBase64: base64
         });
+        onActivityLogged();
+        setFile(null);
+        alert(`${t('logger.success')} (+5 PTS)`);
       }
       else if (activeTab === 'GREEN' && file) {
+        // AI Verification for Green
+        const base64 = await convertToBase64(file);
+        const analysis = await import('../../services/api').then(m => m.analyzeImage(base64));
+
+        const keywords = ['tree', 'plant', 'flower', 'garden', 'nature', 'leaf', 'grass', 'soil', 'planting', 'pot'];
+        const text = (analysis.summary + ' ' + analysis.label + ' ' + (analysis.items?.[0]?.name || '')).toLowerCase();
+
+        const isGreenRelated = keywords.some(k => text.includes(k));
+
+        if (!isGreenRelated && !analysis.isValid) {
+          if (!window.confirm("AI ไม่มั่นใจว่าเป็นรูปเกี่ยวกับการปลูกต้นไม้หรือพื้นที่สีเขียว ต้องการส่งต่อหรือไม่?")) {
+            setLoading(false);
+            return;
+          }
+        }
+
         await logActivity(ActionType.TREE_PLANTING, {
           category: 'green',
           label: t('logger.green_area'),
-          points: 10
+          points: 10,
+          fileBase64: base64
         });
+        onActivityLogged();
+        setFile(null);
+        alert(`${t('logger.success')} (+10 PTS)`);
       }
-      onActivityLogged();
-      setFile(null);
-      alert(t('logger.success'));
     } catch (err) {
       console.error(err);
       alert(t('common.error'));
@@ -145,8 +199,8 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
             key={tab.id}
             onClick={() => { setActiveTab(tab.id as any); setFile(null); }}
             className={`flex-1 py-3 rounded-[16px] text-sm font-bold flex items-center justify-center gap-2 transition-all duration-300 ease-out active:scale-[0.98] ${activeTab === tab.id
-                ? 'bg-white text-green-700 shadow-md shadow-slate-200 ring-1 ring-black/5'
-                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'
+              ? 'bg-white text-green-700 shadow-md shadow-slate-200 ring-1 ring-black/5'
+              : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'
               }`}
           >
             <tab.icon size={18} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
@@ -166,8 +220,8 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-slate-800 font-sans">{t('logger.eco_transit')}</h3>
               <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${status.canLog
-                  ? 'bg-green-50 border-green-200 text-green-700'
-                  : 'bg-red-50 border-red-200 text-red-600'
+                ? 'bg-green-50 border-green-200 text-green-700'
+                : 'bg-red-50 border-red-200 text-red-600'
                 }`}>
                 {status.canLog ? <Clock size={14} className="text-green-600" /> : <AlertTriangle size={14} />}
                 <span className="text-[11px] font-bold uppercase tracking-wider font-mono">
@@ -195,8 +249,8 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
                   disabled={!status.canLog}
                   onClick={() => setTransportMode(mode.id)}
                   className={`p-4 rounded-[24px] border-2 text-left transition-all duration-300 relative overflow-hidden group ${transportMode === mode.id
-                      ? 'bg-green-50 border-green-500 text-green-800 shadow-lg shadow-green-500/10'
-                      : 'bg-white border-transparent hover:border-slate-200 hover:bg-slate-50 text-slate-500'
+                    ? 'bg-green-50 border-green-500 text-green-800 shadow-lg shadow-green-500/10'
+                    : 'bg-white border-transparent hover:border-slate-200 hover:bg-slate-50 text-slate-500'
                     }`}
                 >
                   {/* Checkmark for active state */}
@@ -218,8 +272,8 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
               onClick={handleSubmit}
               disabled={loading || !status.canLog}
               className={`w-full py-4 rounded-[24px] font-bold text-sm shadow-xl hover:shadow-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-6 ${status.canLog
-                  ? 'bg-green-500 text-white shadow-green-500/20 hover:bg-green-600'
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                ? 'bg-green-500 text-white shadow-green-500/20 hover:bg-green-600'
+                : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                 }`}
             >
               {loading ? <Loader2 className="animate-spin" /> : <>{t('logger.log_activity')} <ArrowRight size={18} /></>}
