@@ -79,7 +79,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
         // 2. 📸 Evidence Validation & Enhanced Anti-Cheat
         const actionsRequiringImage = ['recycling', 'zero_waste', 'eco_product', 'tree_planting', 'energy_saving', 'waste_sorting'];
         const requiresImage = actionsRequiringImage.includes(type);
-        
+
         if (requiresImage && !imageBase64) {
             return res.status(400).json({ success: false, error: 'กรุณาแนบรูปถ่ายเป็นหลักฐาน (Evidence Required)' });
         }
@@ -90,8 +90,8 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
         // Check submission cooldown
         const cooldownCheck = await EnhancedAntiCheatService.checkSubmissionCooldown(userId);
         if (!cooldownCheck.allowed) {
-            return res.status(429).json({ 
-                success: false, 
+            return res.status(429).json({
+                success: false,
                 error: `Please wait ${cooldownCheck.waitTime} seconds before submitting again`,
                 waitTime: cooldownCheck.waitTime
             });
@@ -100,9 +100,9 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
         // Check hourly limit
         const hourlyCheck = await EnhancedAntiCheatService.checkHourlyLimit(userId);
         if (!hourlyCheck.allowed) {
-            return res.status(429).json({ 
-                success: false, 
-                error: 'Hourly submission limit exceeded. Please try again later.' 
+            return res.status(429).json({
+                success: false,
+                error: 'Hourly submission limit exceeded. Please try again later.'
             });
         }
 
@@ -130,6 +130,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
         // processing...
         if (imageBase64) {
             try {
+                // 1. Anti-Cheat Fingerprinting & Deduplication
                 const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
                 const buffer = Buffer.from(base64Data, 'base64');
 
@@ -148,8 +149,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
                     console.warn(`[Enhanced AntiCheat] Duplicate detected for User ${userId}: ${check.reason} (confidence: ${check.confidence})`);
                     isFlagged = true;
                     flagReason = check.reason || "Duplicate Image Detected";
-                    
-                    // Only reject if high confidence, otherwise flag for review
+
                     if (check.confidence >= 0.9) {
                         status = 'rejected';
                         points = 0;
@@ -158,11 +158,38 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
                     }
                 }
 
+                // 2. AI Content Validation (New Step)
+                // Only run if not already rejected by duplicate check
+                if (status !== 'rejected') {
+                    console.log(`[AI Validation] Analyzing image content for type: ${type}`);
+                    const analysis = await analyzeWaste(imageBase64);
+
+                    // console.log(`[AI Validation] Result:`, JSON.stringify(analysis)); // Optional debug
+
+                    // Check if AI considers it a valid eco action
+                    // Note: valid_eco_action is from newer prompt, isValid is backward compat
+                    const isContentValid = analysis.valid_eco_action ?? analysis.isValid ?? false;
+
+                    if (!isContentValid) {
+                        console.warn(`[AI Validation] Rejected invalid content: ${analysis.label || 'Unknown'}`);
+                        status = 'rejected';
+                        points = 0;
+                        isFlagged = true;
+                        flagReason = `AI Rejected: ${analysis.label || analysis.summary || "Content not relevant"}`;
+                    } else {
+                        // Optional: Verify if action type matches AI detection
+                        // e.g. User selects "Energy" but AI detects "Waste" -> Flag it
+                        const aiType = analysis.action_type || 'other';
+                        // Simple mapping check could go here if needed
+                        console.log(`[AI Validation] Content Validated. Type: ${aiType}`);
+                    }
+                }
+
             } catch (err) {
-                console.error("[Enhanced AntiCheat] Error processing image:", err);
+                console.error("[Enhanced AntiCheat/AI] Error processing image:", err);
                 // Fail open to not block users, but flag it.
                 isFlagged = true;
-                flagReason = "AntiCheat Processing Error";
+                flagReason = "Processing Error (AntiCheat/AI)";
                 status = 'pending'; // Requires review
             }
         }

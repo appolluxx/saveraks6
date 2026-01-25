@@ -46,7 +46,7 @@ export class EnhancedAntiCheatService {
             req.get('Sec-CH-UA') || '',
             req.get('Sec-CH-UA-Mobile') || '',
         ].join('|');
-        
+
         return createHash('sha256').update(fingerprint).digest('hex').substring(0, 16);
     }
 
@@ -78,12 +78,12 @@ export class EnhancedAntiCheatService {
 
         } catch (error) {
             console.error("Enhanced AntiCheat Compute Error:", error);
-            return { 
-                pHash: '0000000000000000', 
-                dHash: '0000000000000000', 
+            return {
+                pHash: '0000000000000000',
+                dHash: '0000000000000000',
                 aHash: '0000000000000000',
-                histogram: [], 
-                quality: 0 
+                histogram: [],
+                quality: 0
             };
         }
     }
@@ -155,7 +155,7 @@ export class EnhancedAntiCheatService {
         // This is a simplified version - real DCT would be more complex
         const reducedSize = 8;
         const step = size / reducedSize;
-        
+
         let hash = '';
         for (let i = 0; i < reducedSize; i++) {
             for (let j = 0; j < reducedSize; j++) {
@@ -194,7 +194,7 @@ export class EnhancedAntiCheatService {
             // Basic quality metrics
             const resolution = metadata.width * metadata.height;
             const aspectRatio = metadata.width / metadata.height;
-            
+
             // Penalize very low resolution or extreme aspect ratios
             let quality = Math.min(resolution / (640 * 480), 1.0); // Normalize to 0-1
             if (aspectRatio < 0.5 || aspectRatio > 2.0) quality *= 0.5;
@@ -223,22 +223,10 @@ export class EnhancedAntiCheatService {
      * Enhanced duplicate detection with multiple algorithms
      */
     static async checkDuplicate(
-        fingerprint: ImageFingerprint, 
+        fingerprint: ImageFingerprint,
         userId: string,
         deviceFingerprint?: string
     ): Promise<AntiCheatResult> {
-        // TEMPORARILY DISABLED FOR TESTING
-        console.log(`[AntiCheat] Duplicate detection temporarily disabled for testing`);
-        return {
-            isDuplicate: false,
-            confidence: 0,
-            detectionMethod: 'disabled',
-            requiresReview: false,
-            reason: 'Duplicate detection disabled for testing'
-        };
-        
-        // Original code below (commented out)
-        /*
         // 1. Quality check
         if (fingerprint.quality < this.QUALITY_MIN) {
             return {
@@ -252,12 +240,12 @@ export class EnhancedAntiCheatService {
 
         // 2. Image similarity check
         const candidates = await this.getSimilarityCandidates(userId);
-        
+
         for (const candidate of candidates) {
             if (!candidate.pHash) continue;
 
             const similarity = await this.calculateSimilarity(fingerprint, candidate, userId);
-            
+
             if (similarity.isSimilar) {
                 return {
                     isDuplicate: true,
@@ -271,13 +259,12 @@ export class EnhancedAntiCheatService {
             }
         }
 
-        return { 
-            isDuplicate: false, 
+        return {
+            isDuplicate: false,
             confidence: 0.95,
             detectionMethod: 'none',
-            requiresReview: false 
+            requiresReview: false
         };
-        */
     }
 
     /**
@@ -303,7 +290,7 @@ export class EnhancedAntiCheatService {
         const aHashDist = 64; // Not available in DB yet, fallback to max distance
 
         // Histogram correlation
-        const histCorrelation = candidate.histogram ? 
+        const histCorrelation = candidate.histogram ?
             this.histogramCorrelation(fingerprint.histogram, candidate.histogram) : 0;
 
         // Combined confidence calculation
@@ -356,7 +343,7 @@ export class EnhancedAntiCheatService {
         // Exclude submissions from the last 60 seconds to avoid self-comparison
         const sixtySecondsAgo = new Date(Date.now() - 60 * 1000);
         console.log(`[AntiCheat] Getting candidates older than ${sixtySecondsAgo.toISOString()}`);
-        
+
         const candidates = await prisma.ecoAction.findMany({
             where: {
                 AND: [
@@ -364,26 +351,26 @@ export class EnhancedAntiCheatService {
                     {
                         OR: [
                             { userId }, // User's own submissions
-                            { 
-                                createdAt: { 
-                                    gt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) 
-                                } 
+                            {
+                                createdAt: {
+                                    gt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                                }
                             } // Recent global submissions
                         ]
                     }
                 ]
             },
-            select: { 
-                id: true, 
-                userId: true, 
-                pHash: true, 
+            select: {
+                id: true,
+                userId: true,
+                pHash: true,
                 histogram: true,
                 createdAt: true
             },
             orderBy: { createdAt: 'desc' },
             take: 200
         });
-        
+
         console.log(`[AntiCheat] Found ${candidates.length} candidates for comparison`);
         return candidates;
     }
@@ -426,16 +413,16 @@ export class EnhancedAntiCheatService {
             return { allowed: false };
         }
 
-        return { 
-            allowed: true, 
-            remaining: this.MAX_SUBMISSIONS_PER_HOUR - hourlyCount 
+        return {
+            allowed: true,
+            remaining: this.MAX_SUBMISSIONS_PER_HOUR - hourlyCount
         };
     }
 
     // Helper methods
     private static hammingDistance(hex1: string, hex2: string): number {
         if (!hex1 || !hex2 || hex1.length !== hex2.length) return 64;
-        
+
         try {
             const bin1 = BigInt('0x' + hex1).toString(2).padStart(64, '0');
             const bin2 = BigInt('0x' + hex2).toString(2).padStart(64, '0');
