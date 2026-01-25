@@ -10,11 +10,11 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 // Helper function to list available models (for debugging)
 const listAvailableModels = async (): Promise<string[]> => {
     try {
-        // Working models from Google AI Studio
+        // Correct model names for v1beta API
         const models = [
-            'gemini-1.5-flash',
-            'gemini-1.5-pro',
-            'gemini-pro'
+            'gemini-1.5-flash-001',
+            'gemini-1.5-pro-001',
+            'gemini-pro-1.0'
         ];
         console.log('[AI Service] Available models to try:', models);
         return models;
@@ -70,11 +70,11 @@ const getFallbackResponse = (): any => {
 };
 
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
-    // Use working models from Google AI Studio
+    // Use correct model names for v1beta API
     const modelsToTry = [
-        'gemini-1.5-flash',
-        'gemini-1.5-pro',
-        'gemini-pro'
+        'gemini-1.5-flash-001',
+        'gemini-1.5-pro-001',
+        'gemini-pro-1.0'
     ];
 
     const sanitizedBase64 = cleanBase64(base64Image);
