@@ -68,9 +68,14 @@ const getFallbackResponse = (): any => {
 };
 
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
-    // Use the latest Gemini 3 Flash model
+    // Use a prioritized list of stable Gemini models as fallbacks
     const modelsToTry = [
-        'gemini-3-flash-preview'
+        // Primary model (fast, lower cost)
+        'gemini-3-flash-preview',
+        // Stable high-quality models (fallback if primary fails or is overloaded)
+        'gemini-1.5-flash',
+        'gemini-1.5-pro',
+        'gemini-pro-vision'
     ];
 
     const sanitizedBase64 = cleanBase64(base64Image);

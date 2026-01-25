@@ -303,14 +303,14 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
                   </span>
                 ) : (
                   <div className="text-center">
-                    <p className="text-slate-600 font-bold text-sm">Click to Upload</p>
-                    <span className="text-slate-400 text-xs mt-1 block">MP4, JPG, PNG supported</span>
+                    <p className="text-slate-600 font-bold text-sm">Tap to Capture</p>
+                    <span className="text-slate-400 text-xs mt-1 block">Image/Video captured via camera</span>
                   </div>
                 )}
               </div>
             </div>
 
-            <input type="file" ref={fileInputRef} className="hidden" accept="video/*,image/*" onChange={handleFileChange} />
+            <input type="file" ref={fileInputRef} className="hidden" accept="video/*,image/*" capture="environment" onChange={handleFileChange} />
 
             <button
               onClick={handleSubmit}
@@ -344,7 +344,7 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
                   </span>
                 ) : (
                   <div className="text-center">
-                    <p className="text-slate-600 font-bold text-sm">Upload Evidence</p>
+                    <p className="text-slate-600 font-bold text-sm">Tap to Capture</p>
                     <span className="text-slate-400 text-xs mt-1 block">Photos of turned off devices</span>
                   </div>
                 )}
