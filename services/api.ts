@@ -28,16 +28,32 @@ const getHeaders = () => {
 
 export const api = {
   async get(endpoint: string) {
-    const res = await fetch(getFullUrl(endpoint), { headers: getHeaders() });
-    return res.json();
+    const url = getFullUrl(endpoint);
+    console.log(`📡 [API] GET Check: ${url}`);
+    try {
+      const res = await fetch(url, { headers: getHeaders() });
+      console.log(`✅ [API] GET Success: ${url} (Status: ${res.status})`);
+      return res.json();
+    } catch (e) {
+      console.error(`❌ [API] GET Failed: ${url}`, e);
+      throw e;
+    }
   },
   async post(endpoint: string, data: any) {
-    const res = await fetch(getFullUrl(endpoint), {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
+    const url = getFullUrl(endpoint);
+    console.log(`📡 [API] POST Check: ${url}`);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data)
+      });
+      console.log(`✅ [API] POST Success: ${url} (Status: ${res.status})`);
+      return res.json();
+    } catch (e) {
+      console.error(`❌ [API] POST Failed: ${url}`, e);
+      throw e;
+    }
   }
 };
 
