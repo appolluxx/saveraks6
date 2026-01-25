@@ -68,11 +68,9 @@ const getFallbackResponse = (): any => {
 };
 
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
-    // Use correct model names for v1beta API
+    // Use the latest Gemini 3 Flash model
     const modelsToTry = [
-        'gemini-1.5-flash-001',
-        'gemini-1.5-pro-001',
-        'gemini-pro-1.0'
+        'gemini-3-flash-preview'
     ];
 
     const sanitizedBase64 = cleanBase64(base64Image);
