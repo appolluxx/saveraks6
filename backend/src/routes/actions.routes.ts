@@ -77,7 +77,10 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
         // if (!isAllowedTime) { ... }
 
         // 2. 📸 Evidence Validation & Enhanced Anti-Cheat
-        if (!imageBase64) {
+        const actionsRequiringImage = ['recycling', 'zero_waste', 'eco_product', 'tree_planting', 'energy_saving', 'waste_sorting'];
+        const requiresImage = actionsRequiringImage.includes(type);
+        
+        if (requiresImage && !imageBase64) {
             return res.status(400).json({ success: false, error: 'กรุณาแนบรูปถ่ายเป็นหลักฐาน (Evidence Required)' });
         }
 
