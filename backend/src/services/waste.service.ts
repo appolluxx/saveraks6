@@ -12,9 +12,7 @@ const listAvailableModels = async (): Promise<string[]> => {
     try {
         // Correct model names for v1beta API
         const models = [
-            'gemini-1.5-flash-001',
-            'gemini-1.5-pro-001',
-            'gemini-pro-1.0'
+            'gemini-3-flash-preview',
         ];
         console.log('[AI Service] Available models to try:', models);
         return models;
