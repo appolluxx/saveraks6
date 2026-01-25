@@ -210,24 +210,6 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
             locationVerified: !!(locationLat && locationLng),
             isFlagged: action.isFlagged // Debug info
         });
-
-        await prisma.user.update({
-            where: { id: userId },
-            data: { totalPoints: { increment: points } }
-        });
-
-        res.json({
-            id: action.id,
-            userId: action.userId,
-            userName: action.user?.fullName || 'User',
-            type: action.actionType,
-            srtEarned: action.pointsEarned,
-            description: action.description,
-            timestamp: action.createdAt.getTime(),
-            status: action.status,
-            imageUrl: action.imageUrl,
-            locationVerified: !!(locationLat && locationLng)
-        });
     } catch (error: any) {
         if (error.code === 'P2003') {
             return res.status(401).json({ success: false, error: 'User session invalid. Please log in again.' });
