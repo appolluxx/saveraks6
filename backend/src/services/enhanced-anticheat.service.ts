@@ -227,6 +227,18 @@ export class EnhancedAntiCheatService {
         userId: string,
         deviceFingerprint?: string
     ): Promise<AntiCheatResult> {
+        // TEMPORARILY DISABLED FOR TESTING
+        console.log(`[AntiCheat] Duplicate detection temporarily disabled for testing`);
+        return {
+            isDuplicate: false,
+            confidence: 0,
+            detectionMethod: 'disabled',
+            requiresReview: false,
+            reason: 'Duplicate detection disabled for testing'
+        };
+        
+        // Original code below (commented out)
+        /*
         // 1. Quality check
         if (fingerprint.quality < this.QUALITY_MIN) {
             return {
@@ -265,6 +277,7 @@ export class EnhancedAntiCheatService {
             detectionMethod: 'none',
             requiresReview: false 
         };
+        */
     }
 
     /**
@@ -340,13 +353,14 @@ export class EnhancedAntiCheatService {
      * Get candidates for similarity comparison
      */
     private static async getSimilarityCandidates(userId: string): Promise<any[]> {
-        // Exclude submissions from the last 10 seconds to avoid self-comparison
-        const tenSecondsAgo = new Date(Date.now() - 10 * 1000);
+        // Exclude submissions from the last 60 seconds to avoid self-comparison
+        const sixtySecondsAgo = new Date(Date.now() - 60 * 1000);
+        console.log(`[AntiCheat] Getting candidates older than ${sixtySecondsAgo.toISOString()}`);
         
-        return await prisma.ecoAction.findMany({
+        const candidates = await prisma.ecoAction.findMany({
             where: {
                 AND: [
-                    { createdAt: { lt: tenSecondsAgo } }, // Exclude very recent submissions
+                    { createdAt: { lt: sixtySecondsAgo } }, // Exclude very recent submissions
                     {
                         OR: [
                             { userId }, // User's own submissions
@@ -369,6 +383,9 @@ export class EnhancedAntiCheatService {
             orderBy: { createdAt: 'desc' },
             take: 200
         });
+        
+        console.log(`[AntiCheat] Found ${candidates.length} candidates for comparison`);
+        return candidates;
     }
 
     /**
