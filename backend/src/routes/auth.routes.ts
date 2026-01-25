@@ -13,6 +13,12 @@ router.get('/test-ai', testGeminiConnection);
 
 
 // Login
+router.get('/login', (req, res) => {
+    res.status(405).json({
+        success: false,
+        error: 'Method Not Allowed. Please use POST request with JSON body { identifier, password }'
+    });
+});
 router.post('/login', login);
 
 // Register Student
