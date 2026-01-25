@@ -25,6 +25,14 @@ const Marketplace: React.FC<MarketplaceProps> = ({ user, onRedeem }) => {
 
   const handleRedeem = async () => {
     if (!selected) return;
+
+    // Show confirmation dialog
+    const confirmed = window.confirm("กรุณาอย่ากดเอง หากกดเองแล้วโปรดแค้ปไว้\n\nPlease do not press yourself. If you press yourself, please keep the proof.");
+
+    if (!confirmed) {
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await redeemItem(selected.id, selected.cost, selected.title);
