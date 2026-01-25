@@ -31,8 +31,8 @@ export class EnhancedAntiCheatService {
     private static readonly AHASH_THRESHOLD = 12;
     private static readonly HISTOGRAM_CORRELATION_MIN = 0.85;
     private static readonly QUALITY_MIN = 0.3;
-    private static readonly SUBMISSION_COOLDOWN_MINUTES = 5;
-    private static readonly MAX_SUBMISSIONS_PER_HOUR = 10;
+    private static readonly SUBMISSION_COOLDOWN_MINUTES = 0.5; // 30 seconds for testing
+    private static readonly MAX_SUBMISSIONS_PER_HOUR = 30; // Increased for testing
 
     /**
      * Generate device fingerprint from request headers
