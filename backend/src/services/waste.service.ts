@@ -75,53 +75,44 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
 
     const sanitizedBase64 = cleanBase64(base64Image);
 
-    const systemInstruction = `You are a Waste Management Specialist for Surasakmontree School in Thailand.
-    Your goal is to accurately categorize waste into 4 specific bins.
+    const systemInstruction = `You are an AI Validator for an Eco-School application (SaveRaks).
+    Your task is to analyze the image and detect if it represents a valid eco-friendly action.
 
-    CRITICAL RULES FOR RECYCLING (Prioritize Yellow for Bottles):
-    
-    1. 🟡 YELLOW BIN (Recycle):
-       - **PLASTIC BOTTLES (PET)** -> ALWAYS Yellow if it's a bottle. If it has water, instruct to empty it.
-       - Aluminum Cans, Glass Bottles.
-       - Paper/Cardboard (unless heavily soaked/greasy).
-       
-    2. 🟢 GREEN BIN (Organic):
-       - Food waste, Fruit peels, Flowers.
-       
-    3. 🔴 RED BIN (Hazardous):
-       - Batteries, Spray cans, Electronics.
-       
-    4. 🔵 BLUE BIN (General):
-       - Plastic bags, Snack bags (Foil lined), Straws.
-       - Tissue, Foam, Dirty food containers.
-       
-    DECISION LOGIC:
-    - **Is it a Plastic Bottle?** -> **YELLOW**. (Instruct: "Empty liquid first")
-    - **Is it a Can?** -> **YELLOW**.
-    - **Is it a Snack Bag?** -> **BLUE**.
-    - **Is it a Food Container?** -> If clean=Yellow, If dirty=Blue.
+    CATEGORIES TO DETECT:
+    1. �️ WASTE SORTING ( bins: yellow, green, red, blue )
+       - Plastic bottles -> Yellow
+       - Cans/Glass -> Yellow
+       - Food waste -> Green
+       - Hazardous -> Red
+       - General -> Blue
 
-    Strictly Return JSON only:
+    2. ⚡ ENERGY SAVING ( evidence of saving energy )
+       - Turning off lights (finger on switch, dark room)
+       - Unplugging devices
+       - Air conditioner off / Fan off
+       - Solar panels / Natural light usage
+
+    3. 🌱 GREEN ACTIVITY ( evidence of nature/planting )
+       - Planting trees/flowers
+       - Watering plants
+       - Gardens / Green spaces
+       - Soil / Pots / Saplings
+
+    OUTPUT JSON FORMAT:
     {
+      "valid_eco_action": boolean, // Is this a valid eco action?
+      "action_type": "waste" | "energy" | "green" | "other",
       "items": [
         {
-          "name": "Object Name (Short, e.g. Plastic Bottle)",
-          "bin": "green | blue | yellow | red",
-          "binNameThai": "ถัง...",
-          "confidence": 0.99,
-          "instructions": "Specific instruction",
-          "instructionsThai": "คำแนะนำภาษาไทย",
-          "category": "Plastic | Paper | Glass | Metal | Organic | General | Hazardous"
+          "name": "Object Name",
+          "bin": "green | blue | yellow | red" (only if waste),
+          "confidence": 0.99
         }
       ],
-      "summary": "Concise summary",
-      "summaryThai": "สรุปสั้นๆ",
-      "label": "Main Object Name (THAI Language, e.g. 'ขวดพลาสติก')",
-      "bin_name": "Bin Name (Thai)",
-      "upcycling_tip": "Short disposal instruction in Thai",
-      "hasHazardous": boolean,
-      "needsCleaning": boolean,
-      "overallComplexity": "low"
+      "summary": "English summary of action",
+      "summaryThai": "สรุปการกระทำภาษาไทย",
+      "label": "Short Thai Label (e.g. 'ปิดไฟ', 'ปลูกต้นไม้', 'ขวดพลาสติก')",
+      "isValid": boolean // Duplicate of valid_eco_action for compatibility
     }`;
 
     // Try each model until one works
