@@ -65,63 +65,68 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
         if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
         // 1. 🕒 Time Restriction & Frequency Limit (Commute Only)
+        // STRICTLY enforces Thailand Time (UTC+7)
         if (type === 'commute') {
             const now = new Date();
-            const hour = now.getHours();
-            const minute = now.getMinutes();
+
+            // Convert to Thailand Time components for validation
+            const thaiTimeStr = now.toLocaleString("en-US", { timeZone: "Asia/Bangkok" });
+            const thaiDate = new Date(thaiTimeStr); // Note: This date object's 'local' times reflect Thai time
+
+            const thHour = thaiDate.getHours();
+            const thMin = thaiDate.getMinutes();
+            const thYear = thaiDate.getFullYear();
+            const thMonth = thaiDate.getMonth();
+            const thDay = thaiDate.getDate();
+
+            console.log(`[Commute Check] Server: ${now.toISOString()} | Thai: ${thaiDate.toString()}`);
 
             // Morning: 05:00 - 08:30
-            const isMorning = (hour > 5 || (hour === 5 && minute >= 0)) && (hour < 8 || (hour === 8 && minute <= 30));
-            // Evening: 15:00 - 19:00 (Up to 19:00:00)
-            const isEvening = (hour >= 15 && hour < 19) || (hour === 19 && minute === 0);
+            const isMorning = (thHour > 5 || (thHour === 5 && thMin >= 0)) && (thHour < 8 || (thHour === 8 && thMin <= 30));
+            // Evening: 15:00 - 19:00
+            const isEvening = (thHour >= 15 && thHour < 19) || (thHour === 19 && thMin === 0);
 
             let currentSlot = '';
-            if (isMorning) currentSlot = 'MORNING';
-            else if (isEvening) currentSlot = 'EVENING';
+            let slotStartUtc: Date | null = null;
+            let slotEndUtc: Date | null = null;
 
-            if (!currentSlot) {
+            // Note: Date.UTC arguments: year, month, day, hour (UTC), minute...
+            // Thai Time is UTC+7, so UTC = Thai - 7
+            if (isMorning) {
+                currentSlot = 'MORNING';
+                slotStartUtc = new Date(Date.UTC(thYear, thMonth, thDay, 5 - 7, 0, 0));
+                slotEndUtc = new Date(Date.UTC(thYear, thMonth, thDay, 8 - 7, 30, 0));
+            } else if (isEvening) {
+                currentSlot = 'EVENING';
+                slotStartUtc = new Date(Date.UTC(thYear, thMonth, thDay, 15 - 7, 0, 0));
+                slotEndUtc = new Date(Date.UTC(thYear, thMonth, thDay, 19 - 7, 0, 0));
+            }
+
+            if (!currentSlot || !slotStartUtc || !slotEndUtc) {
+                // Construct readable error
                 return res.status(400).json({
                     success: false,
-                    error: 'ตรวจสอบการเดินทางได้เฉพาะช่วงเวลา 05:00-08:30 และ 15:00-19:00 เท่านั้น'
+                    error: `ตรวจสอบการเดินทางได้เฉพาะช่วงเวลา 05:00-08:30 และ 15:00-19:00 (เวลาไทย) เท่านั้น. ขณะนี้เวลา ${thHour}:${thMin < 10 ? '0' + thMin : thMin}`
                 });
             }
 
-            // Check if user already submitted for this slot today
-            const startOfDay = new Date();
-            startOfDay.setHours(0, 0, 0, 0);
-
-            const endOfDay = new Date();
-            endOfDay.setHours(23, 59, 59, 999);
-
-            const todayCommutes = await prisma.ecoAction.findMany({
+            // Check specific slot usage
+            const slotUsage = await prisma.ecoAction.findFirst({
                 where: {
                     userId,
                     actionType: 'commute',
                     createdAt: {
-                        gte: startOfDay,
-                        lte: endOfDay
+                        gte: slotStartUtc,
+                        lte: slotEndUtc
                     }
                 }
             });
 
-            // Determine if slot is taken
-            const hasMorning = todayCommutes.some(a => {
-                const h = a.createdAt.getHours();
-                const m = a.createdAt.getMinutes();
-                return (h > 5 || (h === 5 && m >= 0)) && (h < 8 || (h === 8 && m <= 30));
-            });
-
-            const hasEvening = todayCommutes.some(a => {
-                const h = a.createdAt.getHours();
-                const m = a.createdAt.getMinutes();
-                return (h >= 15 && h < 19) || (h === 19 && m === 0);
-            });
-
-            if (currentSlot === 'MORNING' && hasMorning) {
-                return res.status(400).json({ success: false, error: 'คุณบันทึกการเดินทางช่วงเช้าไปแล้ว (Limit: 1/Morning)' });
-            }
-            if (currentSlot === 'EVENING' && hasEvening) {
-                return res.status(400).json({ success: false, error: 'คุณบันทึกการเดินทางช่วงเย็นไปแล้ว (Limit: 1/Evening)' });
+            if (slotUsage) {
+                return res.status(400).json({
+                    success: false,
+                    error: `คุณได้บันทึกการเดินทางรอบ ${currentSlot} ไปแล้ว (จำกัด 1 ครั้ง/รอบ)`
+                });
             }
         }
 
