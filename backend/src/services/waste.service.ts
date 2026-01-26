@@ -122,7 +122,7 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
 
     for (const modelName of modelsToTry) {
         try {
-            console.log(`[AI Service] Attempting analysis with model: ${modelName}`);
+            console.log(`[AI Service] Attempting analysis with Gemini: ${modelName}`);
 
             // Check if API key is valid
             if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your-api-key-here') {
@@ -132,11 +132,8 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
             // Note: systemInstruction is available in newer versions of @google/generative-ai
             // If it fails with older versions, we might need to prepend it to the prompt.
             // Assuming ^0.24.1 is used which supports it.
-            const model = genAI.getGenerativeModel({
-                model: modelName,
-            }, {
-                apiVersion: 'v1'
-            });
+            // Reverted to default API version (v1beta) for Gemini 1.5 support
+            const model = genAI.getGenerativeModel({ model: modelName });
 
             const result = await model.generateContent([
                 { text: systemInstruction }, // Pass system instruction as part of the prompt
