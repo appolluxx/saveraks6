@@ -22,6 +22,7 @@
         "dotenv": "^16.6.1",
         "express": "^4.18.3",
         "express-rate-limit": "^7.1.5",
+        "groq-sdk": "^0.37.0",
         "hamming-distance": "^1.0.0",
         "helmet": "^7.1.0",
         "jsonwebtoken": "^9.0.2",
