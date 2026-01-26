@@ -3,6 +3,7 @@ import { Bus, Sprout, Video, Zap, Upload, Loader2, Clock } from 'lucide-react';
 import { logActivity } from '../../services/api';
 import { ActionType, User } from '../../types';
 import { useTranslation } from 'react-i18next';
+import VisionUnit from '../../pages/VisionUnit';
 
 // Added for camera capture
 const getMediaStream = async () => {
@@ -203,20 +204,14 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
       {/* Vision Unit Overlay - Renders when visionMode is active */}
       {visionMode && (
         <div className="fixed inset-0 z-[100]">
-          {/* Dynamically import VisionUnit to avoid circular deps if any, or just render it */}
-          {/* Assuming VisionUnit is imported at top */}
-          {React.createElement(
-            require('../../pages/VisionUnit').default,
-            {
-              mode: visionMode,
-              onBack: () => setVisionMode(null),
-              onComplete: () => {
-                setVisionMode(null);
-                onActivityLogged();
-                // alert is handled in VisionUnit, maybe just refresh data here
-              }
-            }
-          )}
+          <VisionUnit
+            mode={visionMode}
+            onBack={() => setVisionMode(null)}
+            onComplete={() => {
+              setVisionMode(null);
+              onActivityLogged();
+            }}
+          />
         </div>
       )}
 
@@ -260,8 +255,8 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
                 key={mode.id}
                 onClick={() => setTransportMode(mode.id)}
                 className={`w-full p-4 rounded-[20px] border-2 transition-all flex items-center justify-between group ${transportMode === mode.id
-                    ? 'border-green-400 bg-green-50'
-                    : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
+                  ? 'border-green-400 bg-green-50'
+                  : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
                   }`}
               >
                 <div className="flex items-center gap-3">

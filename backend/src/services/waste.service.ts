@@ -11,7 +11,9 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 const listAvailableModels = async (): Promise<string[]> => {
     try {
         // Correct model names for v1beta API
-        const models = ['gemini-flash-latest'];
+        const models = [
+            'gemini-flash-latest'
+        ];
         console.log('[AI Service] Available models to try:', models);
         return models;
     } catch (error) {
@@ -68,12 +70,7 @@ const getFallbackResponse = (): any => {
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
     // Use a prioritized list of stable Gemini models as fallbacks
     const modelsToTry = [
-        // Primary model: Generic Flash Latest (Proven to work)
-        'gemini-flash-latest',
-        // Fallback: Gemini 2.0 Flash (Quota limited)
-        'gemini-2.0-flash',
-        // Fallback: Bleeding edge (Strict Quota)
-        'gemini-3-flash-preview'
+        'gemini-flash-latest'
     ];
 
     const sanitizedBase64 = cleanBase64(base64Image);
