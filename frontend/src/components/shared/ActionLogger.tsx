@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Bus, Sprout, Video, Zap, Upload, Loader2, Clock } from 'lucide-react';
-import { logActivity } from '../../services/api';
+import { logActivity, analyzeImage } from '../../services/api';
 import { ActionType, User } from '../../types';
 import { useTranslation } from 'react-i18next';
 import VisionUnit from '../../pages/VisionUnit';
@@ -27,6 +27,13 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
   const cameraRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+
+  // Vision Overlay State
+  const [visionMode, setVisionMode] = useState<'ENERGY' | 'GREEN' | null>(null);
+
+  const startVision = (mode: 'ENERGY' | 'GREEN') => {
+    setVisionMode(mode);
+  };
 
   const startCamera = async () => {
     try {
@@ -132,7 +139,8 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
       else if (activeTab === 'ENERGY' && file) {
         // AI Verification for Energy
         const base64 = await convertToBase64(file);
-        const analysis = await import('../../services/api').then(m => m.analyzeImage(base64));
+        // Corrected: Direct import usage
+        const analysis = await analyzeImage(base64);
 
         // Simple keywords check based on analysis summary or label
         const keywords = ['switch', 'light', 'lamp', 'plug', 'off', 'dark', 'electronic', 'appliance', 'air conditioner', 'fan'];
@@ -140,7 +148,7 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
 
         const isEnergyRelated = keywords.some(k => text.includes(k));
 
-        if (!isEnergyRelated && !analysis.isValid) { // Allow if marked valid by AI logic directly
+        if (!isEnergyRelated && !analysis.isValid) {
           if (!window.confirm("AI ไม่มั่นใจว่าเป็นรูปเกี่ยวกับการประหยัดพลังงาน (เช่น ปิดไฟ, ถอดปลั๊ก) ต้องการส่งต่อหรือไม่?")) {
             setLoading(false);
             return;
@@ -160,7 +168,8 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
       else if (activeTab === 'GREEN' && file) {
         // AI Verification for Green
         const base64 = await convertToBase64(file);
-        const analysis = await import('../../services/api').then(m => m.analyzeImage(base64));
+        // Corrected: Direct import usage
+        const analysis = await analyzeImage(base64);
 
         const keywords = ['tree', 'plant', 'flower', 'garden', 'nature', 'leaf', 'grass', 'soil', 'planting', 'pot'];
         const text = (analysis.summary + ' ' + analysis.label + ' ' + (analysis.items?.[0]?.name || '')).toLowerCase();
@@ -190,13 +199,6 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
     } finally {
       setLoading(false);
     }
-  };
-
-  // Vision Overlay State
-  const [visionMode, setVisionMode] = useState<'ENERGY' | 'GREEN' | null>(null);
-
-  const startVision = (mode: 'ENERGY' | 'GREEN') => {
-    setVisionMode(mode);
   };
 
   return (
@@ -255,8 +257,8 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
                 key={mode.id}
                 onClick={() => setTransportMode(mode.id)}
                 className={`w-full p-4 rounded-[20px] border-2 transition-all flex items-center justify-between group ${transportMode === mode.id
-                  ? 'border-green-400 bg-green-50'
-                  : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
+                    ? 'border-green-400 bg-green-50'
+                    : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
                   }`}
               >
                 <div className="flex items-center gap-3">
