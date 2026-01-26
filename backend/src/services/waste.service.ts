@@ -11,7 +11,7 @@ const groq = new Groq({
 
 // Helper function to list available models (for debugging) - Simplified for Groq
 const listAvailableModels = async (): Promise<string[]> => {
-    return ['llama-3.2-11b-vision-preview'];
+    return ['meta-llama/llama-4-scout-17b-16e-instruct'];
 };
 
 const cleanBase64 = (base64: string): string => {
@@ -75,7 +75,7 @@ const analyzeWithGroq = async (base64Image: string, systemInstruction: string): 
                     ]
                 }
             ],
-            "model": "llama-3.2-90b-vision-preview",
+            "model": "meta-llama/llama-4-scout-17b-16e-instruct",
             "temperature": 0.5,
             "max_completion_tokens": 1024,
             "top_p": 1,
