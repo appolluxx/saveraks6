@@ -12,9 +12,7 @@ const listAvailableModels = async (): Promise<string[]> => {
     try {
         // Correct model names for v1beta API
         const models = [
-            'gemini-1.5-flash',
-            'gemini-1.5-pro',
-            'gemini-pro-vision'
+            'gemini-3-flash-preview',
         ];
         console.log('[AI Service] Available models to try:', models);
         return models;
@@ -72,9 +70,10 @@ const getFallbackResponse = (): any => {
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
     // Use a prioritized list of stable Gemini models as fallbacks
     const modelsToTry = [
-        // Primary model (stable, good free tier limits)
+        // Primary model (fast, lower cost)
+        'gemini-3-flash-preview',
+        // Stable high-quality models (fallback if primary fails or is overloaded)
         'gemini-1.5-flash',
-        // Fallbacks
         'gemini-1.5-pro',
         'gemini-pro-vision'
     ];
