@@ -1,26 +1,17 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
-// Initialize the Google GenAI client
-// Ensure API key is present, otherwise log warning (though it will fail later if missing)
-if (!process.env.GEMINI_API_KEY) {
-    console.warn("WARNING: GEMINI_API_KEY is missing from environment variables.");
+// Initialize Groq client
+if (!process.env.GROQ_API_KEY) {
+    console.warn("WARNING: GROQ_API_KEY is missing from environment variables.");
 }
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-// Helper function to list available models (for debugging)
+const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY || "dummy_key",
+});
+
+// Helper function to list available models (for debugging) - Simplified for Groq
 const listAvailableModels = async (): Promise<string[]> => {
-    try {
-        // Correct model names for v1beta API
-        const models = [
-            'gemini-1.5-flash',
-            'gemini-1.5-pro'
-        ];
-        console.log('[AI Service] Available models to try:', models);
-        return models;
-    } catch (error) {
-        console.error('[AI Service] Could not list models:', error);
-        return [];
-    }
+    return ['llama-3.2-11b-vision-preview'];
 };
 
 const cleanBase64 = (base64: string): string => {
@@ -38,7 +29,6 @@ const extractJson = (text: string | undefined): any => {
     }
 };
 
-// Original Fallback Mock Response (Restored for reliable demos)
 const getFallbackResponse = (): any => {
     console.warn("[AI Service] ⚠️ Activating Fallback Protocol (Mock Data) - API Failed");
     return {
@@ -53,27 +43,59 @@ const getFallbackResponse = (): any => {
                 category: "404"
             }
         ],
-        summary: "404",
-        summaryThai: "404",
-        label: "404",
-        bin_name: "404",
-        bin_color: "404",
+        summary: "AI Service Unavailable",
+        summaryThai: "ระบบ AI ไม่พร้อมใช้งาน",
+        label: "AI Failed",
+        bin_name: "Check Connection",
+        bin_color: "gray",
         hasHazardous: false,
         needsCleaning: false,
         overallComplexity: "low",
-        // Additional fields for compatibility
-        points: 10,
-        isValid: true,
+        points: 0,
+        isValid: false,
         isFraud: false
     };
 };
 
+const analyzeWithGroq = async (base64Image: string, systemInstruction: string): Promise<any> => {
+    try {
+        console.log('[AI Service] Attempting analysis with GROQ (Llama 3.2 Vision)...');
+        const chatCompletion = await groq.chat.completions.create({
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        { "type": "text", "text": systemInstruction },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": `data:image/jpeg;base64,${base64Image}`
+                            }
+                        }
+                    ]
+                }
+            ],
+            "model": "llama-3.2-11b-vision-preview",
+            "temperature": 0.5,
+            "max_completion_tokens": 1024,
+            "top_p": 1,
+            "stream": false,
+            "response_format": { "type": "json_object" }
+        });
+
+        const content = chatCompletion.choices[0]?.message?.content;
+        if (!content) throw new Error("Groq returned empty content");
+
+        console.log('[AI Service] Groq Analysis Success');
+        return JSON.parse(content);
+    } catch (error: any) {
+        console.error(`[AI Service] Groq Failed: ${error.message}`);
+        throw error; // Rethrow to let main function handle fallback
+    }
+};
+
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
-    // Use a prioritized list of stable Gemini models as fallbacks
-    const modelsToTry = [
-        'gemini-1.5-flash',
-        'gemini-1.5-pro'
-    ];
+    console.log("[AI Service] v3.0 (Groq ONLY) Initialized");
 
     const sanitizedBase64 = cleanBase64(base64Image);
 
@@ -100,84 +122,35 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
        - Gardens / Green spaces
        - Soil / Pots / Saplings
 
-    OUTPUT JSON FORMAT:
+    OUTPUT JSON FORMAT (Strictly match this):
     {
-      "valid_eco_action": boolean, // Is this a valid eco action?
+      "valid_eco_action": boolean,
       "action_type": "waste" | "energy" | "green" | "other",
       "items": [
         {
           "name": "Object Name",
-          "bin": "green | blue | yellow | red" (only if waste),
+          "bin": "green | blue | yellow | red", // Only for waste
           "confidence": 0.99
         }
       ],
-      "summary": "English summary of action",
-      "summaryThai": "สรุปการกระทำภาษาไทย",
-      "label": "Short Thai Label (e.g. 'ปิดไฟ', 'ปลูกต้นไม้', 'ขวดพลาสติก')",
-      "isValid": boolean // Duplicate of valid_eco_action for compatibility
+      "summary": "Short English summary",
+      "summaryThai": "สรุปภาษาไทยสั้นๆ",
+      "label": "Thai Label (e.g. 'ปิดไฟ', 'ขวดน้ำ')",
+      "isValid": boolean
     }`;
 
-    // Try each model until one works
-    await listAvailableModels(); // Log available models for debugging
-
-    for (const modelName of modelsToTry) {
+    // Try GROQ
+    if (process.env.GROQ_API_KEY && process.env.GROQ_API_KEY.startsWith('gsk_')) {
         try {
-            console.log(`[AI Service] Attempting analysis with Gemini: ${modelName}`);
-
-            // Check if API key is valid
-            if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your-api-key-here') {
-                throw new Error('Invalid or missing GEMINI_API_KEY');
-            }
-
-            // Note: systemInstruction is available in newer versions of @google/generative-ai
-            // If it fails with older versions, we might need to prepend it to the prompt.
-            // Assuming ^0.24.1 is used which supports it.
-            // Reverted to default API version (v1beta) for Gemini 1.5 support
-            const model = genAI.getGenerativeModel({ model: modelName });
-
-            const result = await model.generateContent([
-                { text: systemInstruction }, // Pass system instruction as part of the prompt
-                {
-                    inlineData: {
-                        mimeType: "image/jpeg",
-                        data: sanitizedBase64
-                    }
-                }
-            ]);
-
-            const response = await result.response;
-            const text = response.text();
-
-            if (!text) {
-                console.warn(`[AI Service] Model ${modelName} returned empty response.`);
-                continue;
-            }
-
-            console.log(`[AI Service] Success with model: ${modelName}`);
-            return extractJson(text);
-
-        } catch (error: any) {
-            console.warn(`[AI Service] Model ${modelName} failed: ${error.message}`);
-
-            // Log more details for debugging
-            if (error.message.includes('404')) {
-                console.error(`[AI Service] Model ${modelName} not found (404). Check model name availability.`);
-            } else if (error.message.includes('403') || error.message.includes('permission')) {
-                console.error(`[AI Service] Permission denied. Check API key and quotas.`);
-            } else if (error.message.includes('API key')) {
-                console.error(`[AI Service] API key issue. Verify GEMINI_API_KEY environment variable.`);
-            }
-            // 503 is Overloaded
-            else if (error.message.includes('503')) {
-                console.warn(`[AI Service] Model ${modelName} overloaded. Retrying next model.`);
-            }
-
-            // Continue to next model
+            return await analyzeWithGroq(sanitizedBase64, systemInstruction);
+        } catch (e) {
+            console.warn("[AI Service] Groq failed. Fallback to Mock Data.");
         }
+    } else {
+        console.error("[AI Service] GROQ_API_KEY is missing or invalid.");
     }
 
-    // If all models fail, return the Mock Response (Plastic Bottle) 
-    // This allows the user to continue usage/demo even if API is down/quota exceeded.
+    // Final Fallback (No Gemini anymore)
     console.error("[AI Service] All AI models failed. Using Fallback.");
     return getFallbackResponse();
 };
