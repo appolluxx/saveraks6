@@ -71,8 +71,8 @@ const getFallbackResponse = (): any => {
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
     // Use a prioritized list of stable Gemini models as fallbacks
     const modelsToTry = [
-        'gemini-1.5-flash-latest',
-        'gemini-pro-vision'
+        'gemini-2.0-flash-lite',
+        'gemini-2.0-flash'
     ];
 
     const sanitizedBase64 = cleanBase64(base64Image);
