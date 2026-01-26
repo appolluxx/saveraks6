@@ -11,11 +11,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 const listAvailableModels = async (): Promise<string[]> => {
     try {
         // Correct model names for v1beta API
-        const models = [
-            'gemini-3-flash-preview',
-            'gemini-2.0-flash-exp',
-            'gemini-1.5-flash-latest',
-        ];
+        const models = ['gemini-3-flash-preview'];
         console.log('[AI Service] Available models to try:', models);
         return models;
     } catch (error) {
