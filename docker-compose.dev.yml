@@ -1,0 +1,50 @@
+version: '3.9'
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: saveraks_dev
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  minio:
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: saveraks_backend_dev
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${DB_USER:-saveraks_user}:${DB_PASSWORD}@postgres:5432/saveraks_dev?schema=public
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./backend/uploads:/app/uploads
+    command: npm run dev
+    ports:
+      - "3000:3000"
+      - "9229:9229" # Debugger port
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: saveraks_frontend_dev
+    environment:
+      VITE_API_URL: http://localhost:3000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host
+    ports:
+      - "5173:5173"

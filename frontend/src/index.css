@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* แก้ไขเส้นทางให้ถูกต้องตามโครงสร้าง Vercel (ถอยกลับไป 2 ระดับจาก frontend/src) */
+@source "../../components/**/*.{ts,tsx}";
+@source "../../pages/**/*.{ts,tsx}";
+@source "../index.html";
+@source "./**/*.{ts,tsx}";
+
+@theme {
+  --font-display: "Kanit", sans-serif;
+  --font-sans: "Sarabun", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-neon-green: #00E978;
+  --color-neon-blue: #3B82F6;
+  --color-zinc-950: #09090B;
+  --color-zinc-900: #18181B;
+  --color-zinc-800: #27272A;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    font-family: 'Sarabun', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #F8FAFC;
+    /* Slate-50 */
+    color: #09090B;
+    /* Zinc-950 */
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(34, 197, 94, 0.1);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+  }
+
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+}

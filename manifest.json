@@ -1,0 +1,28 @@
+{
+  "name": "SaveRaks 2.0 - Eco Guardian",
+  "short_name": "SaveRaks",
+  "description": "Gamified sustainability platform for Surasakmontree School",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#22c55e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://fav.farm/🌿",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Scan Action",
+      "url": "/?page=vision"
+    },
+    {
+      "name": "View Feed",
+      "url": "/?page=feed"
+    }
+  ]
+}
