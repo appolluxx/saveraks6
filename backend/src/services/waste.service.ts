@@ -18,6 +18,12 @@ const cleanBase64 = (base64: string): string => {
     return base64.includes(',') ? base64.split(',')[1] : base64;
 };
 
+const getMimeType = (base64: string): string => {
+    if (base64.startsWith('/9j/')) return 'image/jpeg';
+    if (base64.startsWith('iVBORw0KGgo')) return 'image/png';
+    return 'image/jpeg'; // Default fallback
+};
+
 const extractJson = (text: string | undefined): any => {
     if (!text) return {};
     try {
@@ -69,7 +75,7 @@ const analyzeWithGroq = async (base64Image: string, systemInstruction: string): 
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": `data:image/jpeg;base64,${base64Image}`
+                                "url": `data:${getMimeType(base64Image)};base64,${base64Image}`
                             }
                         }
                     ]

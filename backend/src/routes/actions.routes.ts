@@ -64,17 +64,66 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
 
         if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-        // 1. 🕒 Time Restriction (Morning until 8:30, Evening from 15:30 to 18:00)
-        // [Logic preserved from previous thought, kept simple/lenient for now or strictly as requested]
-        const now = new Date();
-        const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
-        const isMorning = (currentHour < 8) || (currentHour === 8 && currentMinute <= 30);
-        const isEvening = (currentHour >= 15 && currentHour < 18);
-        const isAllowedTime = isMorning || isEvening;
+        // 1. 🕒 Time Restriction & Frequency Limit (Commute Only)
+        if (type === 'commute') {
+            const now = new Date();
+            const hour = now.getHours();
+            const minute = now.getMinutes();
 
-        // NOTE: Commenting out strict enforce to allow testing. 
-        // if (!isAllowedTime) { ... }
+            // Morning: 05:00 - 08:30
+            const isMorning = (hour > 5 || (hour === 5 && minute >= 0)) && (hour < 8 || (hour === 8 && minute <= 30));
+            // Evening: 15:00 - 19:00 (Up to 19:00:00)
+            const isEvening = (hour >= 15 && hour < 19) || (hour === 19 && minute === 0);
+
+            let currentSlot = '';
+            if (isMorning) currentSlot = 'MORNING';
+            else if (isEvening) currentSlot = 'EVENING';
+
+            if (!currentSlot) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'ตรวจสอบการเดินทางได้เฉพาะช่วงเวลา 05:00-08:30 และ 15:00-19:00 เท่านั้น'
+                });
+            }
+
+            // Check if user already submitted for this slot today
+            const startOfDay = new Date();
+            startOfDay.setHours(0, 0, 0, 0);
+
+            const endOfDay = new Date();
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const todayCommutes = await prisma.ecoAction.findMany({
+                where: {
+                    userId,
+                    actionType: 'commute',
+                    createdAt: {
+                        gte: startOfDay,
+                        lte: endOfDay
+                    }
+                }
+            });
+
+            // Determine if slot is taken
+            const hasMorning = todayCommutes.some(a => {
+                const h = a.createdAt.getHours();
+                const m = a.createdAt.getMinutes();
+                return (h > 5 || (h === 5 && m >= 0)) && (h < 8 || (h === 8 && m <= 30));
+            });
+
+            const hasEvening = todayCommutes.some(a => {
+                const h = a.createdAt.getHours();
+                const m = a.createdAt.getMinutes();
+                return (h >= 15 && h < 19) || (h === 19 && m === 0);
+            });
+
+            if (currentSlot === 'MORNING' && hasMorning) {
+                return res.status(400).json({ success: false, error: 'คุณบันทึกการเดินทางช่วงเช้าไปแล้ว (Limit: 1/Morning)' });
+            }
+            if (currentSlot === 'EVENING' && hasEvening) {
+                return res.status(400).json({ success: false, error: 'คุณบันทึกการเดินทางช่วงเย็นไปแล้ว (Limit: 1/Evening)' });
+            }
+        }
 
         // 2. 📸 Evidence Validation & Enhanced Anti-Cheat
         const actionsRequiringImage = ['recycling', 'zero_waste', 'eco_product', 'tree_planting', 'energy_saving', 'waste_sorting'];
