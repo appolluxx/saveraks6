@@ -18,7 +18,7 @@ async function testGeminiAPI() {
         const genAI = new GoogleGenerativeAI(apiKey);
 
         // Test different model names
-        const models = ['gemini-3-flash-preview'];
+        const models = ['gemini-2.0-flash-lite', 'gemini-2.0-flash'];
 
         for (const modelName of models) {
             try {

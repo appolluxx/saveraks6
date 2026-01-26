@@ -61,9 +61,9 @@ export interface DetailedWasteResult {
 
 export const analyzeEnvironmentImage = async (base64Image: string, mode: string): Promise<DetailedWasteResult> => {
   try {
-    const model = 'gemini-3-flash-preview';
+    const model = 'gemini-2.0-flash-lite';
     const sanitizedBase64 = cleanBase64(base64Image);
-    
+
     // Updated system instruction to include 'category' in the top-level JSON to match expected ScanResult structure
     let systemInstruction = `You are a Waste Management Specialist for Surasakmontree School.
     Analyze the image and provide a sorting guide. 
@@ -128,7 +128,7 @@ export const analyzeEnvironmentImage = async (base64Image: string, mode: string)
 
 export const analyzeUtilityBill = async (base64Image: string): Promise<any> => {
   try {
-    const model = 'gemini-3-flash-preview';
+    const model = 'gemini-2.0-flash-lite';
     const sanitizedBase64 = cleanBase64(base64Image);
     const systemInstruction = `Extract energy units (kWh) and month from the utility bill. Return JSON.`;
 
