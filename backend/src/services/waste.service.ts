@@ -134,12 +134,12 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
             // Assuming ^0.24.1 is used which supports it.
             const model = genAI.getGenerativeModel({
                 model: modelName,
-                systemInstruction: systemInstruction
             }, {
                 apiVersion: 'v1'
             });
 
             const result = await model.generateContent([
+                { text: systemInstruction }, // Pass system instruction as part of the prompt
                 {
                     inlineData: {
                         mimeType: "image/jpeg",
