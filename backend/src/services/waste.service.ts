@@ -11,7 +11,7 @@ const groq = new Groq({
 
 // Helper function to list available models (for debugging) - Simplified for Groq
 const listAvailableModels = async (): Promise<string[]> => {
-    return ['llama-3.2-90b-vision-preview'];
+    return ['llama-3.2-11b-vision-preview'];
 };
 
 const cleanBase64 = (base64: string): string => {
