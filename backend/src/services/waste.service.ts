@@ -11,11 +11,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 const listAvailableModels = async (): Promise<string[]> => {
     try {
         // Correct model names for v1beta API
-        const models = [
-            'gemini-2.0-flash',
-            'gemini-flash-latest',
-            'gemini-3-flash-preview'
-        ];
+        const models = ['gemini-flash-latest'];
         console.log('[AI Service] Available models to try:', models);
         return models;
     } catch (error) {
@@ -45,20 +41,20 @@ const getFallbackResponse = (): any => {
     return {
         items: [
             {
-                name: "Plastic Bottle (Simulation)",
-                bin: "yellow",
-                binNameThai: "ถังเหลือง (รีไซเคิล)",
+                name: "404",
+                bin: "404",
+                binNameThai: "404",
                 confidence: 0.99,
-                instructions: "Empty liquid, crush, and place in yellow bin.",
-                instructionsThai: "เทน้ำออก บีบให้แบน และทิ้งลงถังเหลือง",
-                category: "Plastic"
+                instructions: "404",
+                instructionsThai: "404",
+                category: "404"
             }
         ],
-        summary: "Recyclable plastic bottle detected (Simulated).",
-        summaryThai: "ตรวจพบขวดพลาสติก รีไซเคิลได้ (จำลอง)",
-        label: "Plastic Bottle",
-        bin_name: "ถังเหลือง (Recycle)",
-        bin_color: "yellow",
+        summary: "404",
+        summaryThai: "404",
+        label: "404",
+        bin_name: "404",
+        bin_color: "404",
         hasHazardous: false,
         needsCleaning: false,
         overallComplexity: "low",

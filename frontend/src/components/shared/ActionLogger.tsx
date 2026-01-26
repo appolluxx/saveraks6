@@ -1,4 +1,4 @@
- import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Bus, Sprout, Video, Zap, Upload, Loader2, Clock } from 'lucide-react';
 import { logActivity } from '../../services/api';
 import { ActionType, User } from '../../types';
@@ -86,7 +86,7 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
 
   // Transport mode state
   const [transportMode, setTransportMode] = useState('walk');
-  
+
   const transportModes = [
     { id: 'walk', label: 'Walk', points: 10, type: ActionType.WALK, icon: <Video size={16} />, desc: 'Walking to school' },
     { id: 'bicycle', label: 'Bicycle', points: 10, type: ActionType.BICYCLE, icon: <Video size={16} />, desc: 'Cycling to school' },
@@ -99,16 +99,16 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
     const hour = now.getHours();
     const minute = now.getMinutes();
     const timeInMinutes = hour * 60 + minute;
-    
+
     // Allowed: 00:00-08:30 and 15:30-18:00
     const morningEnd = 8 * 60 + 30; // 08:30
     const eveningStart = 15 * 60 + 30; // 15:30
     const eveningEnd = 18 * 60; // 18:00
-    
+
     if (timeInMinutes <= morningEnd || (timeInMinutes >= eveningStart && timeInMinutes <= eveningEnd)) {
       return { canLog: true, reason: '' };
     }
-    
+
     return { canLog: false, reason: 'Logging only allowed during morning (until 8:30 AM) and evening (3:30-6:00 PM)' };
   };
 
@@ -191,8 +191,35 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
     }
   };
 
+  // Vision Overlay State
+  const [visionMode, setVisionMode] = useState<'ENERGY' | 'GREEN' | null>(null);
+
+  const startVision = (mode: 'ENERGY' | 'GREEN') => {
+    setVisionMode(mode);
+  };
+
   return (
     <div className="max-w-md mx-auto p-4 bg-white rounded-[32px] shadow-xl">
+      {/* Vision Unit Overlay - Renders when visionMode is active */}
+      {visionMode && (
+        <div className="fixed inset-0 z-[100]">
+          {/* Dynamically import VisionUnit to avoid circular deps if any, or just render it */}
+          {/* Assuming VisionUnit is imported at top */}
+          {React.createElement(
+            require('../../pages/VisionUnit').default,
+            {
+              mode: visionMode,
+              onBack: () => setVisionMode(null),
+              onComplete: () => {
+                setVisionMode(null);
+                onActivityLogged();
+                // alert is handled in VisionUnit, maybe just refresh data here
+              }
+            }
+          )}
+        </div>
+      )}
+
       <div className="flex justify-around mb-6 bg-slate-100 rounded-[24px] p-1">
         <button
           onClick={() => setActiveTab('TRANS')}
@@ -232,16 +259,14 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
               <button
                 key={mode.id}
                 onClick={() => setTransportMode(mode.id)}
-                className={`w-full p-4 rounded-[20px] border-2 transition-all flex items-center justify-between group ${
-                  transportMode === mode.id
+                className={`w-full p-4 rounded-[20px] border-2 transition-all flex items-center justify-between group ${transportMode === mode.id
                     ? 'border-green-400 bg-green-50'
                     : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    transportMode === mode.id ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-600 group-hover:bg-green-100 group-hover:text-green-600'
-                  }`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${transportMode === mode.id ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-600 group-hover:bg-green-100 group-hover:text-green-600'
+                    }`}>
                     {mode.icon}
                   </div>
                   <div className="text-left">
@@ -287,50 +312,17 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
             <p className="text-slate-500 text-sm font-medium">{t('logger.energy_evidence')}</p>
           </div>
 
-          <div
-            onClick={startCamera}
-            className="group border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-400 rounded-[24px] p-8 cursor-pointer transition-all duration-300 ease-out"
-          >
-            <div className="flex flex-col items-center gap-3">
-              <Upload className="h-10 w-10 text-slate-400 group-hover:text-blue-500 transition-colors" />
-              {file ? (
-                <span className="text-blue-600 font-bold text-sm bg-white px-3 py-1 rounded-full shadow-sm">
-                  {file.name}
-                </span>
-              ) : (
-                <>
-                  <p className="text-slate-600 font-bold text-sm">Tap to Capture</p>
-                  <span className="text-slate-400 text-xs mt-1 block">Photos of turned off devices</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-
-          {showCamera && (
-            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-[24px] p-4 max-w-sm w-full">
-                <video ref={cameraRef} autoPlay className="w-full rounded-[16px] mb-4" />
-                <canvas ref={canvasRef} className="hidden" />
-                <div className="flex gap-2">
-                  <button onClick={capturePhoto} className="mt-2 w-full bg-green-600 text-white py-2 rounded">
-                    Capture Photo
-                  </button>
-                  <button onClick={stopCamera} className="mt-2 w-full bg-red-600 text-white py-2 rounded">
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           <button
-            onClick={handleSubmit}
-            disabled={!file || loading}
-            className={`w-full py-4 bg-blue-600 text-white rounded-[24px] font-bold text-sm shadow-xl shadow-blue-500/20 hover:bg-blue-700 active:scale-[0.98] transition-all mt-4 flex justify-center items-center gap-2 ${(!file || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={() => startVision('ENERGY')}
+            className="w-full group border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-400 rounded-[24px] p-8 cursor-pointer transition-all duration-300 ease-out flex flex-col items-center gap-4 py-12"
           >
-            {loading ? <Loader2 className="animate-spin" /> : <>{t('logger.submit_evidence')} <span className="font-mono opacity-80">(+5 PTS)</span></>}
+            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Video className="h-8 w-8 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-slate-700 font-bold text-lg">OPEN AI CAMERA</p>
+              <span className="text-slate-400 text-xs mt-1 block">Scan turning off lights, unplugging devices</span>
+            </div>
           </button>
         </div>
       )}
@@ -345,50 +337,17 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
             <p className="text-slate-500 text-sm font-medium">{t('logger.green_evidence')}</p>
           </div>
 
-          <div
-            onClick={startCamera}
-            className="group border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 rounded-[24px] p-8 cursor-pointer transition-all duration-300 ease-out"
-          >
-            <div className="flex flex-col items-center gap-3">
-              <Upload className="h-10 w-10 text-slate-400 group-hover:text-emerald-500 transition-colors" />
-              {file ? (
-                <span className="text-emerald-600 font-bold text-sm bg-white px-3 py-1 rounded-full shadow-sm">
-                  {file.name}
-                </span>
-              ) : (
-                <>
-                  <p className="text-slate-600 font-bold text-sm">Tap to Capture</p>
-                  <span className="text-slate-400 text-xs mt-1 block">Photos of trees, plants, or gardens</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-
-          {showCamera && (
-            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-[24px] p-4 max-w-sm w-full">
-                <video ref={cameraRef} autoPlay className="w-full rounded-[16px] mb-4" />
-                <canvas ref={canvasRef} className="hidden" />
-                <div className="flex gap-2">
-                  <button onClick={capturePhoto} className="mt-2 w-full bg-green-600 text-white py-2 rounded">
-                    Capture Photo
-                  </button>
-                  <button onClick={stopCamera} className="mt-2 w-full bg-red-600 text-white py-2 rounded">
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           <button
-            onClick={handleSubmit}
-            disabled={!file || loading}
-            className={`w-full py-4 bg-emerald-600 text-white rounded-[24px] font-bold text-sm shadow-xl shadow-emerald-500/20 hover:bg-emerald-700 active:scale-[0.98] transition-all mt-4 flex justify-center items-center gap-2 ${(!file || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={() => startVision('GREEN')}
+            className="w-full group border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 rounded-[24px] p-8 cursor-pointer transition-all duration-300 ease-out flex flex-col items-center gap-4 py-12"
           >
-            {loading ? <Loader2 className="animate-spin" /> : <>{t('logger.submit_evidence')} <span className="font-mono opacity-80">(+10 PTS)</span></>}
+            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Video className="h-8 w-8 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-slate-700 font-bold text-lg">OPEN AI CAMERA</p>
+              <span className="text-slate-400 text-xs mt-1 block">Scan plants, trees, or nature activities</span>
+            </div>
           </button>
         </div>
       )}
