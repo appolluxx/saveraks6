@@ -12,7 +12,8 @@ const listAvailableModels = async (): Promise<string[]> => {
     try {
         // Correct model names for v1beta API
         const models = [
-            'gemini-flash-latest'
+            'gemini-1.5-flash',
+            'gemini-1.5-pro'
         ];
         console.log('[AI Service] Available models to try:', models);
         return models;
@@ -70,7 +71,8 @@ const getFallbackResponse = (): any => {
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
     // Use a prioritized list of stable Gemini models as fallbacks
     const modelsToTry = [
-        'gemini-flash-latest'
+        'gemini-1.5-flash',
+        'gemini-1.5-pro'
     ];
 
     const sanitizedBase64 = cleanBase64(base64Image);
