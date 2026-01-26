@@ -12,8 +12,8 @@ const listAvailableModels = async (): Promise<string[]> => {
     try {
         // Correct model names for v1beta API
         const models = [
-            'gemini-2.0-flash-lite',
-            'gemini-2.0-flash'
+            'gemini-1.5-flash',
+            'gemini-1.5-pro'
         ];
         console.log('[AI Service] Available models to try:', models);
         return models;
@@ -71,8 +71,8 @@ const getFallbackResponse = (): any => {
 export const analyzeWaste = async (base64Image: string): Promise<any> => {
     // Use a prioritized list of stable Gemini models as fallbacks
     const modelsToTry = [
-        'gemini-1.5-flash',     // Then Stable Flash
-        'gemini-1.5-pro'        // Then Stable Pro
+        'gemini-1.5-flash',
+        'gemini-1.5-pro'
     ];
 
     const sanitizedBase64 = cleanBase64(base64Image);
@@ -81,7 +81,7 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
     Your task is to analyze the image and detect if it represents a valid eco-friendly action.
 
     CATEGORIES TO DETECT:
-    1. �️ WASTE SORTING ( bins: yellow, green, red, blue )
+    1. 🗑️ WASTE SORTING ( bins: yellow, green, red, blue )
        - Plastic bottles -> Yellow
        - Cans/Glass -> Yellow
        - Food waste -> Green
@@ -135,6 +135,8 @@ export const analyzeWaste = async (base64Image: string): Promise<any> => {
             const model = genAI.getGenerativeModel({
                 model: modelName,
                 systemInstruction: systemInstruction
+            }, {
+                apiVersion: 'v1'
             });
 
             const result = await model.generateContent([
