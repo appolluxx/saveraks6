@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Bus, Sprout, Video, Zap, Upload, Loader2, Clock } from 'lucide-react';
+import { Bus, Sprout, Video, Zap, Upload, Loader2, Clock, Footprints, Bike, Utensils, ShoppingBag } from 'lucide-react';
 import { logActivity, analyzeImage } from '../../services/api';
 import { ActionType, User } from '../../types';
 import { useTranslation } from 'react-i18next';
@@ -95,10 +95,13 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
   // Transport mode state
   const [transportMode, setTransportMode] = useState('walk');
 
+  // Transport & Daily Actions
   const transportModes = [
-    { id: 'walk', label: 'Walk', points: 10, type: ActionType.WALK, icon: <Video size={16} />, desc: 'Walking to school' },
-    { id: 'bicycle', label: 'Bicycle', points: 10, type: ActionType.BICYCLE, icon: <Video size={16} />, desc: 'Cycling to school' },
-    { id: 'bus', label: 'Bus', points: 15, type: ActionType.PUBLIC_TRANSPORT, icon: <Bus size={16} />, desc: 'Taking public transport' },
+    { id: 'walk', label: 'Walk', points: 10, type: ActionType.WALK, icon: <Footprints size={16} />, desc: 'Walking to school' },
+    { id: 'bicycle', label: 'Bicycle', points: 8, type: ActionType.BICYCLE, icon: <Bike size={16} />, desc: 'Cycling to school' },
+    { id: 'bus', label: 'Bus', points: 5, type: ActionType.PUBLIC_TRANSPORT, icon: <Bus size={16} />, desc: 'Taking public transport' },
+    { id: 'canteen', label: 'Canteen', points: 8, type: ActionType.ZERO_WASTE, icon: <Utensils size={16} />, desc: 'Bring it to school' },
+    { id: 'tote_bag', label: 'Tote Bag', points: 8, type: ActionType.ZERO_WASTE, icon: <ShoppingBag size={16} />, desc: 'Bring it to school' },
   ];
 
   // Time-based status
@@ -257,8 +260,8 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
                 key={mode.id}
                 onClick={() => setTransportMode(mode.id)}
                 className={`w-full p-4 rounded-[20px] border-2 transition-all flex items-center justify-between group ${transportMode === mode.id
-                    ? 'border-green-400 bg-green-50'
-                    : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
+                  ? 'border-green-400 bg-green-50'
+                  : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
                   }`}
               >
                 <div className="flex items-center gap-3">
