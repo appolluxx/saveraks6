@@ -15,7 +15,7 @@ const groq = new Groq({
 
 async function main() {
     try {
-        console.log("Testing Vision on meta-llama/llama-4-scout-17b-16e-instruct...");
+        console.log("Testing Vision on meta-llama/llama-4-maverick-17b-128e-instruct...");
 
         // 5x5 Red Dot PNG
         const base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==";
@@ -35,7 +35,7 @@ async function main() {
                     ]
                 }
             ],
-            "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+            "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
             "temperature": 0.1
         });
 

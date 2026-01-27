@@ -65,7 +65,7 @@ const getFallbackResponse = (): any => {
 
 const analyzeWithGroq = async (base64Image: string, systemInstruction: string): Promise<any> => {
     try {
-        console.log('[AI Service] Attempting analysis with GROQ (Llama 3.2 Vision)...');
+        console.log('[AI Service] Attempting analysis with GROQ (Llama 4 Maverick)...');
         const chatCompletion = await groq.chat.completions.create({
             "messages": [
                 {
@@ -81,7 +81,7 @@ const analyzeWithGroq = async (base64Image: string, systemInstruction: string): 
                     ]
                 }
             ],
-            "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+            "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
             "temperature": 0.5,
             "max_completion_tokens": 1024,
             "top_p": 1,
