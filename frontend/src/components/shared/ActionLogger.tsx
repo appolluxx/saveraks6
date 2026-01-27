@@ -135,8 +135,19 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
     try {
       if (activeTab === 'TRANS') {
         const mode = transportModes.find(m => m.id === transportMode) || transportModes[0];
-        await logActivity(mode.type, { label: `${t('logger.transport')}: ${mode.label}`, points: mode.points });
+
+        let base64 = undefined;
+        if (file) {
+          base64 = await convertToBase64(file);
+        }
+
+        await logActivity(mode.type, {
+          label: `${t('logger.transport')}: ${mode.label}`,
+          points: mode.points,
+          fileBase64: base64
+        });
         onActivityLogged();
+        setFile(null); // Clear file after submit
         alert(t('logger.success'));
       }
       else if (activeTab === 'ENERGY' && file) {
@@ -206,6 +217,19 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
 
   return (
     <div className="max-w-md mx-auto p-4 bg-white rounded-[32px] shadow-xl">
+      {/* Camera Overlay */}
+      {showCamera && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <video ref={cameraRef} autoPlay playsInline className="flex-1 object-cover" />
+          <canvas ref={canvasRef} className="hidden" />
+          <div className="bg-black p-6 flex justify-between items-center">
+            <button onClick={stopCamera} className="text-white p-4">Cancel</button>
+            <button onClick={capturePhoto} className="w-16 h-16 bg-white rounded-full border-4 border-slate-300"></button>
+            <div className="w-16"></div>
+          </div>
+        </div>
+      )}
+
       {/* Vision Unit Overlay - Renders when visionMode is active */}
       {visionMode && (
         <div className="fixed inset-0 z-[100]">
@@ -282,12 +306,55 @@ const ActionLogger: React.FC<ActionLoggerProps> = ({ user, onActivityLogged }) =
             ))}
           </div>
 
+
+          {/* Evidence Section for Daily Actions */}
+          <div className="bg-slate-50 border border-slate-200 rounded-[20px] p-4">
+            <div className="text-sm font-bold text-slate-700 mb-2 flex justify-between">
+              <span>{t('logger.green_evidence')} <span className="text-red-500">*</span></span>
+              {file && <span className="text-green-600 text-xs">OK</span>}
+            </div>
+
+            {!file ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={startCamera}
+                  className="flex-1 py-3 bg-blue-100 text-blue-700 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-blue-200"
+                >
+                  <Video size={16} /> Camera
+                </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-slate-300"
+                >
+                  <Upload size={16} /> Upload
+                </button>
+              </div>
+            ) : (
+              <div className="relative">
+                <img src={URL.createObjectURL(file)} alt="Evidence" className="w-full h-32 object-cover rounded-xl" />
+                <button
+                  onClick={() => setFile(null)}
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-lg"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileChange}
+            />
+          </div>
+
           <button
             onClick={handleSubmit}
-            disabled={!status.canLog || loading}
-            className={`w-full py-4 bg-green-500 text-white rounded-[24px] font-bold text-sm shadow-xl shadow-green-500/20 hover:bg-green-600 active:scale-[0.98] transition-all flex justify-center items-center gap-2 ${(!status.canLog || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!status.canLog || loading || (['canteen', 'tote_bag'].includes(transportMode) && !file)}
+            className={`w-full py-4 bg-green-500 text-white rounded-[24px] font-bold text-sm shadow-xl shadow-green-500/20 hover:bg-green-600 active:scale-[0.98] transition-all flex justify-center items-center gap-2 ${(!status.canLog || loading || (['canteen', 'tote_bag'].includes(transportMode) && !file)) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {loading ? <Loader2 className="animate-spin" /> : <>{t('logger.log_transport')} <span className="font-mono opacity-80">(+{transportModes.find(m => m.id === transportMode)?.points || 10} PTS)</span></>}
+            {loading ? <Loader2 className="animate-spin" /> : <>{t('logger.log_activity')} <span className="font-mono opacity-80">(+{transportModes.find(m => m.id === transportMode)?.points || 10} PTS)</span></>}
           </button>
 
           {!status.canLog && (
