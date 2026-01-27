@@ -64,9 +64,9 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
 
         if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-        // 1. 🕒 Time Restriction & Frequency Limit (Commute Only)
+        // 1. 🕒 Time Restriction & Frequency Limit (Transport Modes)
         // STRICTLY enforces Thailand Time (UTC+7)
-        if (type === 'commute') {
+        if (['commute', 'walk', 'bicycle'].includes(type)) {
             const now = new Date();
 
             // Convert to Thailand Time components for validation
@@ -75,16 +75,26 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
 
             const thHour = thaiDate.getHours();
             const thMin = thaiDate.getMinutes();
+            const thDayOfWeek = thaiDate.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
             const thYear = thaiDate.getFullYear();
             const thMonth = thaiDate.getMonth();
             const thDay = thaiDate.getDate();
 
-            console.log(`[Commute Check] Server: ${now.toISOString()} | Thai: ${thaiDate.toString()}`);
+            console.log(`[Transport Check] Server: ${now.toISOString()} | Thai: ${thaiDate.toString()}`);
+
+            // Day Check: Monday (1) to Friday (5) only
+            if (thDayOfWeek === 0 || thDayOfWeek === 6) {
+                return res.status(400).json({
+                    success: false,
+                    error: `บันทึกการเดินทางได้เฉพาะวันจันทร์-ศุกร์ เท่านั้น (Today is ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][thDayOfWeek]})`
+                });
+            }
 
             // Morning: 05:00 - 08:30
             const isMorning = (thHour > 5 || (thHour === 5 && thMin >= 0)) && (thHour < 8 || (thHour === 8 && thMin <= 30));
-            // Evening: 15:00 - 19:00
-            const isEvening = (thHour >= 15 && thHour < 19) || (thHour === 19 && thMin === 0);
+
+            // Evening: 14:50 - 19:00
+            const isEvening = (thHour > 14 || (thHour === 14 && thMin >= 50)) && (thHour < 19 || (thHour === 19 && thMin === 0));
 
             let currentSlot = '';
             let slotStartUtc: Date | null = null;
@@ -92,13 +102,16 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
 
             // Note: Date.UTC arguments: year, month, day, hour (UTC), minute...
             // Thai Time is UTC+7, so UTC = Thai - 7
+            // We need to handle day rollover if subtraction goes negative? 
+            // Actually, Date.UTC handles negative hours correctly by rolling back to previous day.
+
             if (isMorning) {
                 currentSlot = 'MORNING';
                 slotStartUtc = new Date(Date.UTC(thYear, thMonth, thDay, 5 - 7, 0, 0));
                 slotEndUtc = new Date(Date.UTC(thYear, thMonth, thDay, 8 - 7, 30, 0));
             } else if (isEvening) {
                 currentSlot = 'EVENING';
-                slotStartUtc = new Date(Date.UTC(thYear, thMonth, thDay, 15 - 7, 0, 0));
+                slotStartUtc = new Date(Date.UTC(thYear, thMonth, thDay, 14 - 7, 50, 0));
                 slotEndUtc = new Date(Date.UTC(thYear, thMonth, thDay, 19 - 7, 0, 0));
             }
 
@@ -106,15 +119,21 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
                 // Construct readable error
                 return res.status(400).json({
                     success: false,
-                    error: `ตรวจสอบการเดินทางได้เฉพาะช่วงเวลา 05:00-08:30 และ 15:00-19:00 (เวลาไทย) เท่านั้น. ขณะนี้เวลา ${thHour}:${thMin < 10 ? '0' + thMin : thMin}`
+                    error: `บันทึกการเดินทางได้เฉพาะช่วงเวลา 05:00-08:30 และ 14:50-19:00 (จันทร์-ศุกร์) เท่านั้น. ขณะนี้เวลา ${thHour}:${thMin < 10 ? '0' + thMin : thMin}`
                 });
             }
 
-            // Check specific slot usage
+            // Check usage for THIS specific action type in this slot
+            // Note: If you want to limit TOTAL transport actions per slot (e.g. only 1 walk OR bus), remove 'actionType: type' filter and use 'actionType: { in: ... }'
+            // User request implies "limit of these three... used only 2 times per day".
+            // Let's assume 1 per slot per type OR 1 per slot total?
+            // "one day used only two times" -> 1 morning, 1 evening.
+            // Safe bet: Limit 1 transport action TOTAL per slot.
+
             const slotUsage = await prisma.ecoAction.findFirst({
                 where: {
                     userId,
-                    actionType: 'commute',
+                    actionType: { in: ['commute', 'walk', 'bicycle'] }, // Limit ANY transport in this slot
                     createdAt: {
                         gte: slotStartUtc,
                         lte: slotEndUtc
@@ -125,7 +144,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
             if (slotUsage) {
                 return res.status(400).json({
                     success: false,
-                    error: `คุณได้บันทึกการเดินทางรอบ ${currentSlot} ไปแล้ว (จำกัด 1 ครั้ง/รอบ)`
+                    error: `คุณได้บันทึกการเดินทางรอบ ${currentSlot} ไปแล้ว (${slotUsage.actionType}) - จำกัด 1 ครั้ง/รอบ`
                 });
             }
         }
